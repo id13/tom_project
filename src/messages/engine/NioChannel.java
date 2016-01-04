@@ -16,8 +16,9 @@ public class NioChannel extends Channel {
     // Nothing to do
   }
   
-  public NioChannel(SelectableChannel channel) {
+  public NioChannel(SelectableChannel channel, SelectionKey key) {
     this.channel = channel;
+    this.selectionKey = key;
   }
   /*public static NioChannel createNioChannel(String hostname, int port) throws IOException {
     NioChannel channel = new NioChannel();
