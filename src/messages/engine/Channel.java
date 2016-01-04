@@ -1,5 +1,6 @@
 package messages.engine;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -20,8 +21,9 @@ public abstract class Channel {
   /**
    * Get the Inet socket address for the other side of this channel.
    * @return
+   * @throws IOException 
    */
-  public abstract InetSocketAddress getRemoteAddress();
+  public abstract InetSocketAddress getRemoteAddress() throws IOException;
 
   /**
    * Sending the given byte array, a copy is made into internal buffers,
@@ -29,8 +31,9 @@ public abstract class Channel {
    * @param bytes
    * @param offset
    * @param length
+   * @throws IOException 
    */
-  public abstract void send(byte[] bytes, int offset, int length);
+  public abstract void send(byte[] bytes, int offset, int length) throws IOException;
 
   
   public abstract void close();
