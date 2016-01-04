@@ -3,20 +3,21 @@ package messages.engine;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 public class NioChannel extends Channel {
   
-  private SocketChannel socket;
+  private SelectableChannel channel;
   private SelectionKey selectionKey;
 
   private NioChannel() {
     // Nothing to do
   }
   
-  public NioChannel(SocketChannel socket) {
-    this.socket = socket;
+  public NioChannel(SelectableChannel channel) {
+    this.channel = channel;
   }
   /*public static NioChannel createNioChannel(String hostname, int port) throws IOException {
     NioChannel channel = new NioChannel();
