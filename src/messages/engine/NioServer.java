@@ -1,11 +1,19 @@
 package messages.engine;
 
+import java.nio.channels.SelectableChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.ServerSocketChannel;
+
 public class NioServer extends Server {
 
   private int port;
+  private SelectionKey key;
+  private SelectableChannel channel;
   
-  public NioServer(int port) {
+  public NioServer(int port, SelectableChannel channel, SelectionKey key) {
     this.port = port;
+    this.key = key;
+    this.channel = channel;
   }
 
   @Override

@@ -2,6 +2,7 @@ package messages.engine;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
@@ -22,6 +23,7 @@ public class NioEngine extends Engine {
   private Selector eventSelector;
   
   public NioEngine() {
+    super();
   }
   
   private void handleGentlyException(Exception ex) {
@@ -61,10 +63,10 @@ public class NioEngine extends Engine {
               SocketChannel socket = sc.accept();
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
-              NioServer server = new NioServer(socket.socket().getLocalPort());
               NioChannel channel = new NioChannel(socket);
-              channel.setSelectionKey(
-                  this.register(socket, channel, SelectionKey.OP_READ));
+              SelectionKey newKey = this.register(socket, channel, SelectionKey.OP_READ);
+              NioServer server = new NioServer(socket.socket().getLocalPort(), socket, newKey);
+              channel.setSelectionKey(newKey);
               channel.setDeliverCallback(peer);
               peer.accepted(server, channel);
             } else if (key.isReadable()) {
@@ -95,15 +97,22 @@ public class NioEngine extends Engine {
 
   @Override
   public Server listen(int port, AcceptCallback callback) throws IOException {
-    // TODO Auto-generated method stub
-    return null;
+    ServerSocketChannel socket = ServerSocketChannel.open();
+    socket.configureBlocking(false);
+    InetSocketAddress isa = new InetSocketAddress(port);
+    socket.bind(isa);
+    return new NioServer(port, socket, 
+        this.register(socket, callback, SelectionKey.OP_ACCEPT));
   }
 
   @Override
   public void connect(InetAddress hostAddress, int port, ConnectCallback callback)
       throws UnknownHostException, SecurityException, IOException {
-    // TODO Auto-generated method stub
-
+    SocketChannel socket = SocketChannel.open();
+    socket.configureBlocking(false);
+    socket.socket().setTcpNoDelay(true);
+    this.register(socket, callback, SelectionKey.OP_CONNECT);
+    socket.connect(new InetSocketAddress(hostAddress, port));
   }
 
 }
