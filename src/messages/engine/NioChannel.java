@@ -6,20 +6,25 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-public class NioChannel extends Channel {
+public class NioChannel extends Channel implements ReceiveCallback {
 
-  private SocketChannel channel;
-  private SelectionKey selectionKey;
+  private static final int READING_LENGTH = 2;
+  private static final int READING_MESSAGE = 3;  
   
-  public NioChannel(SocketChannel channel, SelectionKey key) {
+  private SocketChannel channel;
+  private ByteBuffer receiveBuffer;
+  private DeliverCallback deliverCallback;
+  private int receiveState;
+  
+  public NioChannel(SocketChannel channel) {
     this.channel = channel;
-    this.selectionKey = key;
+    this.receiveBuffer = ByteBuffer.allocate(4);
+    this.receiveState = NioChannel.READING_LENGTH;
   }
 
   @Override
   public void setDeliverCallback(DeliverCallback callback) {
-    // TODO Auto-generated method stub
-
+    this.deliverCallback = callback;
   }
 
   @Override
@@ -42,7 +47,41 @@ public class NioChannel extends Channel {
     try {
       channel.close();
     } catch (IOException e) {
-      Engine.panic("can not close socket.");
+      Engine.panic("can not close channel.");
+    }
+  }
+
+  @Override
+  public void handleReceive() throws IOException {
+    int len, count = 0;
+    switch (receiveState) {
+    case READING_LENGTH:
+      count = channel.read(receiveBuffer);
+      if (count == -1) {
+        Engine.panic("handleReceive: end of stream");
+      }
+      if (receiveBuffer.hasRemaining())
+        return;
+      receiveState = READING_MESSAGE;
+      receiveBuffer.position(0);
+      len = receiveBuffer.getInt();
+      receiveBuffer = ByteBuffer.allocate(len);
+    case READING_MESSAGE:
+      count = channel.read(receiveBuffer);
+      if (count == -1) {
+        Engine.panic("handleReceive: end of stream");
+      }
+      if (receiveBuffer.hasRemaining())
+        return;
+
+      receiveBuffer.position(0);
+      byte bytes[] = new byte[receiveBuffer.remaining()];
+      receiveBuffer.get(bytes);
+
+      receiveState = READING_LENGTH;
+      receiveBuffer = ByteBuffer.allocate(4);
+      
+      this.deliverCallback.deliver(this, bytes);
     }
   }
 }

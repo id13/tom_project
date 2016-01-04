@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 public interface DeliverCallback {
   
   /**
-   * Callback to notify that a message has been received.
+   * Callback to notify that a message has been delivered.
    * The message is whole, all bytes have been accumulated.
    * @param channel
    * @param bytes

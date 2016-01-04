@@ -30,7 +30,7 @@ public class NioEngine extends Engine {
     System.exit(-1);    
   }
 
-  private SelectionKey register(SelectableChannel channel, Object o, int intentions) {
+  private void register(SelectableChannel channel, Object o, int intentions) {
     SelectionKey key = null;
     try {
       key = channel.register(this.eventSelector, intentions);
@@ -38,7 +38,6 @@ public class NioEngine extends Engine {
       this.handleGentlyException(e);
     }
     key.attach(o);
-    return key;
   }
   
   @Override
@@ -54,28 +53,32 @@ public class NioEngine extends Engine {
           if (!key.isValid()) {
             continue;
           } else {
-            Peer peer = (Peer)key.attachment();
+            Object subject = key.attachment();
             if (key.isAcceptable()) {
-              ServerSocketChannel socket = (ServerSocketChannel) key.channel();
-              SocketChannel sc = socket.accept();
-              sc.configureBlocking(false);
-              sc.socket().setTcpNoDelay(true);
-              NioServer server = new NioServer(sc.socket().getLocalPort());
-              SelectionKey newKey = this.register(sc, peer, SelectionKey.OP_READ);
-              NioChannel nioChannel = new NioChannel(sc, newKey);
-              nioChannel.setDeliverCallback(peer);
-              peer.accepted(server, nioChannel);
+              Peer peer = (Peer)subject;
+              ServerSocketChannel sc = (ServerSocketChannel) key.channel();
+              SocketChannel socket = sc.accept();
+              socket.configureBlocking(false);
+              socket.socket().setTcpNoDelay(true);
+              NioServer server = new NioServer(socket.socket().getLocalPort());
+              NioChannel channel = new NioChannel(socket);
+              this.register(socket, channel, SelectionKey.OP_READ);
+              channel.setDeliverCallback(peer);
+              peer.accepted(server, channel);
             } else if (key.isReadable()) {
-             // peer.deliver(channel, bytes);
+              ReceiveCallback receiver = (ReceiveCallback)subject;
+              receiver.handleReceive();
             } else if (key.isWritable()) {
               
             } else if (key.isConnectable()) {
+              Peer peer = (Peer)subject;
               SocketChannel socket = (SocketChannel) key.channel();
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
               socket.finishConnect();
-              key.interestOps(SelectionKey.OP_READ);
-              NioChannel channel = new NioChannel(socket, key);
+              NioChannel channel = new NioChannel(socket);
+              this.register(socket, channel, SelectionKey.OP_READ);
+              channel.setDeliverCallback(peer);              
               peer.connected(channel);
             }
           }
