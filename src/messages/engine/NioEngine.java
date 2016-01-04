@@ -82,7 +82,7 @@ public class NioEngine extends Engine {
               NioChannel channel = new NioChannel(socket);
               channel.setSelectionKey(
                   this.register(socket, channel, SelectionKey.OP_READ));
-              channel.setDeliverCallback(peer);              
+              channel.setDeliverCallback(peer);
               peer.connected(channel);
             }
           }
