@@ -3,6 +3,7 @@ package messages.engine;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -18,6 +19,12 @@ public abstract class Channel {
    */
   public abstract void setDeliverCallback(DeliverCallback callback);
 
+  /**
+   * Set the key which registers the Channel to an Engine
+   * @param key
+   */
+  public abstract void setSelectionKey(SelectionKey key);
+  
   /**
    * Get the Inet socket address for the other side of this channel.
    * @return
