@@ -106,7 +106,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
 
       state = READING_LENGTH;
       receiveBuffer = ByteBuffer.allocate(4);
-      
+      this.state = NioChannel.CONNECTED;
       this.deliverCallback.deliver(this, bytes);
     default: 
       Engine.panic("handleReceive: falling into unexpected state");
