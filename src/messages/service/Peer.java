@@ -1,10 +1,17 @@
-package messages.engine;
+package messages.service;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import messages.engine.AcceptCallback;
+import messages.engine.Channel;
+import messages.engine.ConnectCallback;
+import messages.engine.DeliverCallback;
+import messages.engine.Engine;
+import messages.engine.Server;
 
 public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
 

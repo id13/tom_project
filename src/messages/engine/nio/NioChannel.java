@@ -1,10 +1,16 @@
-package messages.engine;
+package messages.engine.nio;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+
+import messages.engine.Channel;
+import messages.engine.DeliverCallback;
+import messages.engine.Engine;
+import messages.engine.ReceiveCallback;
+import messages.engine.WriteCallback;
 
 public class NioChannel extends Channel implements ReceiveCallback, WriteCallback {
 

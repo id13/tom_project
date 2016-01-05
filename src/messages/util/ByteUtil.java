@@ -1,6 +1,6 @@
-package messages.engine;
+package messages.util;
 
-public class Util {
+public class ByteUtil {
 
   /** Read a signed 32bit value */
   static public int readInt32(byte bytes[], int offset) {

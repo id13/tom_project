@@ -1,8 +1,10 @@
-package messages.engine;
+package messages.engine.nio;
 
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.ServerSocketChannel;
+
+import messages.engine.Server;
 
 public class NioServer extends Server {
 

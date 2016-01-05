@@ -1,4 +1,4 @@
-package messages.engine;
+package messages.engine.nio;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -11,6 +11,14 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+
+import messages.engine.AcceptCallback;
+import messages.engine.ConnectCallback;
+import messages.engine.Engine;
+import messages.engine.ReceiveCallback;
+import messages.engine.Server;
+import messages.engine.WriteCallback;
+import messages.service.Peer;
 
 public class NioEngine extends Engine {
 
