@@ -1,8 +1,8 @@
 package messages.service;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,16 +19,18 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
   private int port;
   private List<Channel> peers = new ArrayList();
   private List<Server> connections = new ArrayList<Server>();
+  private PrintStream out;
   
-  public Peer(Engine engine, int port) {
+  public Peer(Engine engine, int port, PrintStream out) {
     super();
     this.port = port;
     this.engine = engine;
+    this.out = out;
   }
   
   @Override
   public void deliver(Channel channel, byte[] bytes) {
-    
+    this.out.print(new String(bytes));
   }
 
   @Override

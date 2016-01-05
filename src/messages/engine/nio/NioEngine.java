@@ -30,7 +30,7 @@ public class NioEngine extends Engine {
   
   private Selector eventSelector;
   
-  public NioEngine() {
+  private NioEngine() {
     super();
   }
   
