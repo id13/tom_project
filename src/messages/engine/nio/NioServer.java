@@ -1,8 +1,8 @@
 package messages.engine.nio;
 
-import java.nio.channels.SelectableChannel;
+import java.io.IOException;
+import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.ServerSocketChannel;
 
 import messages.engine.Server;
 
@@ -10,23 +10,27 @@ public class NioServer extends Server {
 
   private int port;
   private SelectionKey key;
-  private SelectableChannel channel;
+  private NetworkChannel channel;
   
-  public NioServer(int port, SelectableChannel channel, SelectionKey key) {
+  public NioServer(int port, NetworkChannel channel, SelectionKey key) {
     this.port = port;
     this.key = key;
     this.channel = channel;
   }
 
+  public SelectionKey getSelectionKey() {
+    return this.key;
+  }
+  
   @Override
   public int getPort() {
     return this.port;
   }
 
   @Override
-  public void close() {
-    // TODO Auto-generated method stub
-
+  public void close() throws IOException {
+    NioEngine.getNioEngine().cancelKey(key);
+    channel.close();
   }
 
 }

@@ -11,19 +11,13 @@ import java.nio.channels.SocketChannel;
  * It allows to send and receive messages, 
  * stored in ByteBuffers. 
  */
-public abstract class Channel {
+public abstract class Channel implements Comparable<Channel> {
 
   /**
    * Set the callback to deliver messages to.
    * @param callback
    */
   public abstract void setDeliverCallback(DeliverCallback callback);
-
-  /**
-   * Set the key which registers the Channel to an Engine
-   * @param key
-   */
-  public abstract void setSelectionKey(SelectionKey key);
   
   /**
    * Get the Inet socket address for the other side of this channel.
@@ -45,4 +39,21 @@ public abstract class Channel {
   
   public abstract void close();
 
+  /**
+   * Attach a Server to a channel which acts as a wrapper around the network connection
+   * @param server
+   */
+  public abstract void setServer(Server server);
+  
+  /**
+   * Return the attached Server
+   * @return
+   */
+  public abstract Server getServer();
+  
+  /**
+   * Attach a callback to notify when the channel is closed;
+   * @param callback
+   */
+  public abstract void setClosableCallback(ClosableCallback callback);
 }

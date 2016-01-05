@@ -1,5 +1,7 @@
 package messages.engine;
 
+import java.io.IOException;
+
 /**
  * This class wraps an accepted connection.
  * It provides access to the port on which the connection was accepted
@@ -14,7 +16,8 @@ public abstract class Server {
     
   /**
    * Close the server port, no longer accepting connections.
+   * @throws IOException 
    */
-  public abstract void close();
+  public abstract void close() throws IOException;
 
 }

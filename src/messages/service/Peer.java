@@ -12,14 +12,15 @@ import messages.engine.ConnectCallback;
 import messages.engine.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Server;
+import messages.engine.nio.NioServer;
 
 public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
 
   private Engine engine;
   private int port;
   private List<Channel> peers = new ArrayList();
-  private List<Server> connections = new ArrayList<Server>();
   private PrintStream out;
+  private Server acceptServer;
   
   public Peer(Engine engine, int port, PrintStream out) {
     super();
@@ -29,28 +30,33 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
   }
   
   @Override
-  public void deliver(Channel channel, byte[] bytes) {
-    this.out.print(new String(bytes));
+  public synchronized void deliver(Channel channel, byte[] bytes) {
+    out.print("message delivered : " + new String(bytes) + "\n");
   }
 
   @Override
   public void connected(Channel channel) {
     this.peers.add(channel);
-
   }
 
   @Override
   public void accepted(Server server, Channel channel) {
-    this.connections.add(server);
+    channel.setServer(server);
     this.peers.add(channel);
   }
 
   @Override
-  public void closed(Channel channel) {
-
+  public synchronized void closed(Channel channel) {
+    try {
+      System.err.println("channel with address" + channel.getRemoteAddress().toString() + " closed");
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+    this.peers.remove(channel);
   }
   
-  public void send(String message) {
+  public synchronized void send(String message) {
     byte[] bytes = message.getBytes();
     for(Channel channel : peers) {
       try {
@@ -65,7 +71,7 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
   public void connect(String hostname, int port) {
     InetAddress address;
     try {
-      address = InetAddress.getByName(hostname);
+      address = InetAddress.getByName (hostname);
       this.engine.connect(address, port, this);
     } catch (SecurityException | IOException e) {
       e.printStackTrace();
@@ -73,14 +79,54 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
     }
   }
   
-  public void accept() {
+  public void stopAccept() {
     try {
-      this.engine.listen(port, this);
+      this.acceptServer.close();
     } catch (IOException e) {
       e.printStackTrace();
       Engine.panic(e.getMessage());
     }
   }
   
-
+  /**
+   * Disconnect the Peer from the peers group
+   * Since we are working on a multi-cast basis, it does not make sense to close
+   * one specific connection
+   */
+  public void closeAllConnections() {
+    this.stopAccept();
+    for(Channel channel : peers) {
+      channel.close();
+    }
+  }
+  
+  public void accept() {
+    try {
+      Server server = this.engine.listen(port, this);
+      this.acceptServer = server;
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+  }
+  
+  public int getAcceptPort() {
+    return this.acceptServer.getPort();
+  }
+  
+  public void runBroadcastThread(String message) {
+    Peer peer = this;
+    Runnable broadcast = new Runnable() {
+      @Override
+      public void run() {
+        for(;;) {
+          peer.send(message + " broadcasted from " + peer.getAcceptPort());
+        }
+      }
+      
+    };
+    Thread broadcastThread = new Thread(broadcast, "broadcastThread");
+    broadcastThread.start();
+  }
+  
 }

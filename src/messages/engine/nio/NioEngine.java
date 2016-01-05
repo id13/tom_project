@@ -10,6 +10,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
 import messages.engine.AcceptCallback;
@@ -23,6 +24,7 @@ import messages.service.Peer;
 public class NioEngine extends Engine {
 
   private static NioEngine nioEngine = new NioEngine();
+  private static Object registerLock = new Object();
   
   public static NioEngine getNioEngine() {
     return nioEngine;
@@ -32,6 +34,12 @@ public class NioEngine extends Engine {
   
   private NioEngine() {
     super();
+    try {
+      this.eventSelector = SelectorProvider.provider().openSelector();
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
   }
   
   private void handleGentlyException(Exception ex) {
@@ -43,7 +51,10 @@ public class NioEngine extends Engine {
   private SelectionKey register(SelectableChannel channel, Object o, int intentions) {
     SelectionKey key = null;
     try {
-      key = channel.register(this.eventSelector, intentions);
+      synchronized(NioEngine.registerLock) {
+        this.eventSelector.wakeup();
+        key = channel.register(this.eventSelector, intentions); 
+      }
     } catch (ClosedChannelException e) {
       this.handleGentlyException(e);
     }
@@ -51,11 +62,18 @@ public class NioEngine extends Engine {
     return key;
   }
   
+  public void cancelKey(SelectionKey key) {
+    synchronized(registerLock) {
+      key.cancel();
+    }
+  }
+  
   @Override
   public void mainloop() {
-    long delay = 0;
+    long delay = 500;
     try {
       for (;;) {
+        synchronized(registerLock) {}
         eventSelector.select(delay);
         Iterator<?> selectedKeys = this.eventSelector.selectedKeys().iterator();
         if (selectedKeys.hasNext()) {
@@ -72,10 +90,12 @@ public class NioEngine extends Engine {
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
               NioChannel channel = new NioChannel(socket);
-              SelectionKey newKey = this.register(socket, channel, SelectionKey.OP_READ);
-              NioServer server = new NioServer(socket.socket().getLocalPort(), socket, newKey);
-              channel.setSelectionKey(newKey);
+              NioServer server = new NioServer(
+                  socket.socket().getLocalPort(), 
+                  socket, 
+                  this.register(socket, channel, SelectionKey.OP_READ));
               channel.setDeliverCallback(peer);
+              channel.setClosableCallback(peer);
               peer.accepted(server, channel);
             } else if (key.isReadable()) {
               ReceiveCallback receiver = (ReceiveCallback)subject;
@@ -90,9 +110,13 @@ public class NioEngine extends Engine {
               socket.socket().setTcpNoDelay(true);
               socket.finishConnect();
               NioChannel channel = new NioChannel(socket);
-              channel.setSelectionKey(
-                  this.register(socket, channel, SelectionKey.OP_READ));
               channel.setDeliverCallback(peer);
+              channel.setClosableCallback(peer);
+              Server nioServer = new NioServer(
+                  socket.socket().getLocalPort(), 
+                  socket, 
+                  this.register(socket, channel, SelectionKey.OP_READ));
+              channel.setServer(nioServer);
               peer.connected(channel);
             }
           }
@@ -107,7 +131,7 @@ public class NioEngine extends Engine {
   public Server listen(int port, AcceptCallback callback) throws IOException {
     ServerSocketChannel socket = ServerSocketChannel.open();
     socket.configureBlocking(false);
-    InetSocketAddress isa = new InetSocketAddress(port);
+    InetSocketAddress isa = new InetSocketAddress("localhost", port);
     socket.bind(isa);
     return new NioServer(port, socket, 
         this.register(socket, callback, SelectionKey.OP_ACCEPT));

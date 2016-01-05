@@ -1,6 +1,6 @@
 package messages.engine;
 
-public interface AcceptCallback {
+public interface AcceptCallback extends ClosableCallback {
   /**
    * Callback to notify about an accepted connection.
    * @param server
@@ -8,10 +8,4 @@ public interface AcceptCallback {
    */
   public void accepted(Server server, Channel channel);
   
-  /**
-   * Callback to notify that a previously accepted channel 
-   * has been closed.
-   * @param channel
-   */
-  public void closed(Channel channel);
 }
