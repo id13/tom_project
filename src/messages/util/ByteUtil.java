@@ -1,5 +1,7 @@
 package messages.util;
 
+import java.util.zip.CRC32;
+
 public class ByteUtil {
 
   /** Read a signed 32bit value */
@@ -21,4 +23,10 @@ public class ByteUtil {
     bytes[offset+3]= (byte)(value & 0xff);
   }
 
+  static public long computeCRC32(byte[] bytes) {
+    CRC32 crc = new CRC32();
+    crc.update(bytes);
+    return crc.getValue();
+  }
+  
 }
