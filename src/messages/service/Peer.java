@@ -5,6 +5,8 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import messages.engine.AcceptCallback;
 import messages.engine.Channel;
@@ -18,7 +20,7 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
 
   private Engine engine;
   private int port;
-  private List<Channel> peers = new ArrayList();
+  private List<Channel> channels = new ArrayList();
   private PrintStream out;
   private Server acceptServer;
   
@@ -36,29 +38,29 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
 
   @Override
   public void connected(Channel channel) {
-    this.peers.add(channel);
+    this.channels.add(channel);
   }
 
   @Override
   public void accepted(Server server, Channel channel) {
     channel.setServer(server);
-    this.peers.add(channel);
+    this.channels.add(channel);
   }
 
   @Override
   public synchronized void closed(Channel channel) {
     try {
-      System.err.println("channel with address" + channel.getRemoteAddress().toString() + " closed");
+      System.err.println("channel with address " + channel.getRemoteAddress().toString() + " closed");
     } catch (IOException e) {
       e.printStackTrace();
       Engine.panic(e.getMessage());
     }
-    this.peers.remove(channel);
+    this.channels.remove(channel);
   }
   
   public synchronized void send(String message) {
     byte[] bytes = message.getBytes();
-    for(Channel channel : peers) {
+    for(Channel channel : channels) {
       try {
         channel.send(bytes, 0, bytes.length);
       } catch (IOException e) {
@@ -95,7 +97,7 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
    */
   public void closeAllConnections() {
     this.stopAccept();
-    for(Channel channel : peers) {
+    for(Channel channel : channels) {
       channel.close();
     }
   }
@@ -120,6 +122,12 @@ public class Peer implements AcceptCallback, ConnectCallback, DeliverCallback {
       @Override
       public void run() {
         for(;;) {
+          try {
+            Thread.sleep(10);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+          }
           peer.send(message + " broadcasted from " + peer.getAcceptPort());
         }
       }

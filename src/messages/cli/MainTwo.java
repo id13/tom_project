@@ -24,6 +24,7 @@ public class MainTwo {
     try {      
       peer.accept();
       peer.connect("localhost", 43124);
+      peer.runBroadcastThread("hello !");
     } catch(Exception ex) {
       peer.closeAllConnections();
       ex.printStackTrace();

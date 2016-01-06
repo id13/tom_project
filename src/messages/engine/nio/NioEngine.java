@@ -26,6 +26,10 @@ public class NioEngine extends Engine {
   private static NioEngine nioEngine = new NioEngine();
   private static Object registerLock = new Object();
   
+  public void wakeUpSelector() {
+    this.eventSelector.wakeup();
+  }
+  
   public static NioEngine getNioEngine() {
     return nioEngine;
   }

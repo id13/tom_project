@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import messages.engine.Channel;
 import messages.engine.ClosableCallback;
@@ -17,25 +18,31 @@ import messages.engine.WriteCallback;
 public class NioChannel extends Channel implements ReceiveCallback, WriteCallback {
 
   private static final int DISCONNECTED = 0;
-  private static final int CONNECTED = 2;
-  private static final int SENDING = 3;
-  private static final int READING_LENGTH = 4;
-  private static final int READING_MESSAGE = 5;  
-  
+  private static final int CONNECTED = 1;
+  private static final int NOT_SENDING = 10;
+  private static final int SENDING = 11;
+  private static final int READING_LENGTH = 21;
+  private static final int READING_MESSAGE = 22;  
+
   private SocketChannel channel;
   private SelectionKey key;
   private ByteBuffer receiveBuffer;
-  private ByteBuffer sendBuffer;
   private DeliverCallback deliverCallback;
   private NioServer server;
   private Integer state;
+  private Integer sendingState;
+  private Integer receivingState;
   private ClosableCallback closableCallback;
   private InetSocketAddress remoteLocalAddress;
+  private ConcurrentLinkedQueue<ByteBuffer> dataToSend;
   
   public NioChannel(SocketChannel channel) throws IOException {
     this.channel = channel;
     this.receiveBuffer = ByteBuffer.allocate(4);
     this.state = NioChannel.CONNECTED;
+    this.sendingState = NOT_SENDING;
+    this.receivingState = READING_LENGTH;
+    this.dataToSend = new ConcurrentLinkedQueue<>();
     this.remoteLocalAddress = (InetSocketAddress) (channel.getLocalAddress());
   }
   
@@ -51,23 +58,30 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
 
   @Override
   public void send(byte[] bytes, int offset, int length) throws IOException {
-    synchronized(state) {
+    synchronized(sendingState) {
+      ByteBuffer sendBuffer;
       if(state != CONNECTED)
         return;
-      state = NioChannel.SENDING;
+      sendingState = NioChannel.SENDING;
       sendBuffer = ByteBuffer.allocate(4 + length);
       sendBuffer.putInt(length);
       sendBuffer.put(bytes, offset, length);
       sendBuffer.position(0);
-      this.key.interestOps(SelectionKey.OP_WRITE);
+      this.dataToSend.add(sendBuffer);
+      this.key.interestOps(SelectionKey.OP_WRITE | SelectionKey.OP_READ);
+      NioEngine.getNioEngine().wakeUpSelector();
     }
   }
   
   @Override
   public void handleWrite() throws IOException {
-    synchronized(state) {
-      if(state != SENDING)
-        return;
+    if(state != CONNECTED)
+      return;
+    synchronized(sendingState) {
+      ByteBuffer sendBuffer = dataToSend.peek();
+      if(sendingState != SENDING) {
+        Engine.panic("handleWrite: fall into unexpected state, expected SENDING");
+      }
       int count = channel.write(sendBuffer);
       if (count == -1) {
         // According to the nio doc, -1 means the channel is closed, so we notify
@@ -76,9 +90,12 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
         return;
       }
       if (sendBuffer.remaining() == 0) {
-        state = CONNECTED;
+        this.dataToSend.poll();
+      }
+      if(dataToSend.isEmpty()) {
+        sendingState = NOT_SENDING;
         this.key.interestOps(SelectionKey.OP_READ);
-      }   
+      }
     }
   }
 
@@ -92,7 +109,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
       }
     } catch (IOException e) {
       e.printStackTrace();
-      Engine.panic("can not close channel.");
+      Engine.panic("can not close channel");
     }
   }
   
@@ -106,15 +123,11 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
 
   @Override
   public void handleReceive() throws IOException {
-    synchronized(this.state) {
+    if(state != CONNECTED)
+      return;
+    synchronized(this.receivingState) {
       int len, count = 0;
-      switch (state) {
-      case SENDING:
-        return;
-      case DISCONNECTED:
-        return;
-      case CONNECTED:
-        this.state = NioChannel.READING_LENGTH;
+      switch (this.receivingState) {
       case READING_LENGTH:
         count = channel.read(receiveBuffer);
         if (count == -1) {
@@ -125,7 +138,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
         }
         if (receiveBuffer.hasRemaining())
           return;
-        state = READING_MESSAGE;
+        receivingState = READING_MESSAGE;
         receiveBuffer.position(0);
         len = receiveBuffer.getInt();
         receiveBuffer = ByteBuffer.allocate(len);
@@ -143,8 +156,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
         receiveBuffer.position(0);
         byte bytes[] = new byte[receiveBuffer.remaining()];
         receiveBuffer.get(bytes);
-
-        state = READING_LENGTH;
+        receivingState = READING_LENGTH;
         receiveBuffer = ByteBuffer.allocate(4);
         this.state = NioChannel.CONNECTED;
         this.deliverCallback.deliver(this, bytes);

@@ -23,6 +23,7 @@ public class MainOne {
     Peer peer = new Peer(engine, 43124, System.out);  
     try {  
       peer.accept();
+      peer.runBroadcastThread("hello !");
     } catch(Exception ex) {
       peer.closeAllConnections();
       ex.printStackTrace();
