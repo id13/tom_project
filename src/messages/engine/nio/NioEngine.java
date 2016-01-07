@@ -16,10 +16,10 @@ import java.util.Iterator;
 import messages.engine.AcceptCallback;
 import messages.engine.ConnectCallback;
 import messages.engine.Engine;
+import messages.engine.Messenger;
 import messages.engine.ReceiveCallback;
 import messages.engine.Server;
 import messages.engine.WriteCallback;
-import messages.service.Peer;
 
 public class NioEngine extends Engine {
 
@@ -88,7 +88,7 @@ public class NioEngine extends Engine {
           } else {
             Object subject = key.attachment();
             if (key.isAcceptable()) {
-              Peer peer = (Peer)subject;
+              Messenger messenger = (Messenger)subject;
               ServerSocketChannel sc = (ServerSocketChannel) key.channel();
               SocketChannel socket = sc.accept();
               socket.configureBlocking(false);
@@ -98,9 +98,9 @@ public class NioEngine extends Engine {
                   socket.socket().getLocalPort(), 
                   socket, 
                   this.register(socket, channel, SelectionKey.OP_READ));
-              channel.setDeliverCallback(peer);
-              channel.setClosableCallback(peer);
-              peer.accepted(server, channel);
+              channel.setDeliverCallback(messenger);
+              channel.setClosableCallback(messenger);
+              messenger.accepted(server, channel);
             } else if (key.isReadable()) {
               ReceiveCallback receiver = (ReceiveCallback)subject;
               receiver.handleReceive();
@@ -108,20 +108,20 @@ public class NioEngine extends Engine {
               WriteCallback writer = (WriteCallback)subject;
               writer.handleWrite();
             } else if (key.isConnectable()) {
-              Peer peer = (Peer)subject;
+              Messenger messenger = (Messenger)subject;
               SocketChannel socket = (SocketChannel) key.channel();
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
               socket.finishConnect();
               NioChannel channel = new NioChannel(socket);
-              channel.setDeliverCallback(peer);
-              channel.setClosableCallback(peer);
+              channel.setDeliverCallback(messenger);
+              channel.setClosableCallback(messenger);
               Server nioServer = new NioServer(
                   socket.socket().getLocalPort(), 
                   socket, 
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setServer(nioServer);
-              peer.connected(channel);
+              messenger.connected(channel);
             }
           }
         }

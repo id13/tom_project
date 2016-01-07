@@ -1,8 +1,8 @@
-package messages.cli;
+package messages.engine.nio.burstTest;
 
 import messages.engine.Engine;
+import messages.engine.Messenger;
 import messages.engine.nio.NioEngine;
-import messages.service.Peer;
 
 public class MainOne {
 
@@ -20,12 +20,12 @@ public class MainOne {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();    
-    Peer peer = new Peer(engine, 43124, System.out);  
+    Messenger messenger = new Messenger(engine, 43124, System.out);  
     try {  
-      peer.accept();
-      peer.runBroadcastThread("hello !");
+      messenger.accept();
+      messenger.runBurstBroadcastThread("hello !");
     } catch(Exception ex) {
-      peer.closeAllConnections();
+      messenger.closeAllConnections();
       ex.printStackTrace();
       Engine.panic(ex.getMessage());
     } 
