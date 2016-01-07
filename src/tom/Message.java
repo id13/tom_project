@@ -32,14 +32,21 @@ public class Message {
    * 
    * @param fullMessage
    */
-  public Message(String fullMessage) {
+  public static Message getMessageReceived(String fullMessage) {
     if (fullMessage.length() < 5) {
       Engine.panic("This messages is to short so it can not have headers.");
     }
     byte[] bytes = fullMessage.getBytes();
-    this.logicalClock = ByteUtil.readInt32(bytes, 0);
-    this.messageType = bytes[4];
-    this.content = fullMessage.substring(5);
+    int logicalClock = ByteUtil.readInt32(bytes, 0);
+    byte messageType = bytes[4];
+    String content = fullMessage.substring(5);
+    Message message = new Message(logicalClock, messageType, content);
+    if (messageType == TYPE_ACK) {
+      MessageAck messageAck = new MessageAck(message);
+      return messageAck;
+    } else {
+      return message;
+    }
   }
 
   /**
@@ -53,6 +60,10 @@ public class Message {
     headers[4] = messageType;
     String stringHeaders = new String(headers);
     return stringHeaders + content;
+  }
+  
+  public MessageAck getMessageAck() {
+    return new MessageAck(this);
   }
 
   public int getLogicalClock() {
@@ -70,5 +81,13 @@ public class Message {
    */
   public String getContent() {
     return content;
+  }
+
+  /**
+   * Used only for the builder of MessageAck.
+   * @param content
+   */
+  protected void setContent(String content) {
+    this.content = content;
   }
 }
