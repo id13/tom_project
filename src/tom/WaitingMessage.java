@@ -124,4 +124,9 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
       return this.authorPortNumber - o.authorPortNumber;
     }
   }
+
+  public int getAuthorPortNumber() {
+    return authorPortNumber;
+  }
+  
 }
