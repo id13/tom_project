@@ -20,7 +20,7 @@ public class MainThree {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    Messenger messenger = new Messenger(engine, 62124, System.out);
+    Messenger messenger = new Messenger(engine, 62124);
     try {    
       messenger.accept();
       messenger.connect("localhost", 43124);

@@ -20,7 +20,7 @@ public class MainOne {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();    
-    Messenger messenger = new Messenger(engine, 43124, System.out);  
+    Messenger messenger = new Messenger(engine, 43124);  
     try {  
       messenger.accept();
       messenger.runBurstBroadcastThread("hello !");

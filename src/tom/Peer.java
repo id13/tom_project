@@ -21,7 +21,7 @@ public class Peer implements DeliverCallback {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    this.messenger = new Messenger(engine, port, System.out); // TODO: remove
+    this.messenger = new Messenger(engine, port); // TODO: remove
                                                               // System.out
     try {
       messenger.accept();
@@ -32,9 +32,10 @@ public class Peer implements DeliverCallback {
   }
 
   public void send(String content) {
-    logicalClock++;
+    logicalClock++; 
     Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
-    messenger.broadcast(message.getFullMessage());
+    byte[] bytes = message.getFullMessage().getBytes();
+    messenger.broadcast(bytes);
   }
 
   @Override

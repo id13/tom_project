@@ -18,19 +18,22 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   private Engine engine;
   private int port;
   private Map<Server, Channel> channels = new HashMap<Server, Channel>();
-  private PrintStream out;
   private Server acceptServer;
+  private DeliverCallback deliverCallback;
   
-  public Messenger(Engine engine, int port, PrintStream out) {
+  public Messenger(Engine engine, int port) {
     super();
     this.port = port;
     this.engine = engine;
-    this.out = out;
+  }
+  
+  public void setDeliverCallback(DeliverCallback callback) {
+    this.deliverCallback = callback;
   }
   
   @Override
   public synchronized void deliver(Channel channel, byte[] bytes) {
-    out.print("message delivered : " + new String(bytes) + "\n");
+    this.deliverCallback.deliver(channel, bytes);
   }
 
   @Override
@@ -55,8 +58,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     this.channels.remove(channel);
   }
   
-  public synchronized void broadcast(String message) {
-    byte[] bytes = message.getBytes();
+  public synchronized void broadcast(byte[] bytes) {
     for(Entry<Server, Channel> channel : channels.entrySet()) {
       try {
         channel.getValue().send(bytes, 0, bytes.length);
@@ -109,11 +111,10 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     return this.acceptServer.getPort();
   }
   
-  public void send(Server server, String message) {
+  public void send(Server server, byte[] bytes) {
     Channel channel = channels.get(server);
     if(channel == null)
       Engine.panic("send: the specified server was not found");
-    byte[] bytes = message.getBytes();
     try {
       channel.send(bytes, 0, bytes.length);
     } catch (IOException e) {
@@ -128,7 +129,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       @Override
       public void run() {
         for(;;) {
-          messenger.broadcast(message + " broadcasted from " + messenger.getAcceptPort());
+          messenger.broadcast((message + " broadcasted from " + messenger.getAcceptPort()).getBytes());
         }
       }
       
