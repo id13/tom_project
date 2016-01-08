@@ -14,7 +14,7 @@ import messages.engine.ClosableCallback;
 import messages.engine.DeliverCallback;
 import messages.engine.Server;
 import tom.Message;
-import tom.MessageAck;
+import tom.AckMessage;
 import tom.WaitingMessage;
 
 public class TestWaitingMessage {
@@ -43,12 +43,12 @@ public class TestWaitingMessage {
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel1);
     assertFalse(waitingMessage.isReadyToDeliver(channels));
-    MessageAck messageAck1 = new MessageAck(message, channel1, 456);
+    AckMessage messageAck1 = new AckMessage(message, channel1, 456);
     waitingMessage.addAck(channel1, messageAck1);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
-    MessageAck messageAck2 = new MessageAck(message, channel2, 321);
+    AckMessage messageAck2 = new AckMessage(message, channel2, 321);
     waitingMessage.addAck(channel2, messageAck2);
-    MessageAck messageAck3 = new MessageAck(message, channel3, 400);
+    AckMessage messageAck3 = new AckMessage(message, channel3, 400);
     waitingMessage.addAck(channel3, messageAck3);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel2);
@@ -57,7 +57,7 @@ public class TestWaitingMessage {
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel4);
     assertFalse(waitingMessage.isReadyToDeliver(channels));
-    MessageAck messageAck4 = new MessageAck(message, channel4, 450);
+    AckMessage messageAck4 = new AckMessage(message, channel4, 450);
     waitingMessage.addAck(channel4, messageAck4);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
   }
@@ -80,14 +80,14 @@ public class TestWaitingMessage {
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel1);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
-    MessageAck messageAck2 = new MessageAck(message, channel2, 321);
+    AckMessage messageAck2 = new AckMessage(message, channel2, 321);
     waitingMessage.addAck(channel2, messageAck2);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel2);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
     channels.add(channel3);
     assertFalse(waitingMessage.isReadyToDeliver(channels));
-    MessageAck messageAck3 = new MessageAck(message, channel3, 123);
+    AckMessage messageAck3 = new AckMessage(message, channel3, 123);
     waitingMessage.addAck(channel3, messageAck3);
     assertTrue(waitingMessage.isReadyToDeliver(channels));
   }

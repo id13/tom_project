@@ -12,7 +12,6 @@ public class Peer implements DeliverCallback {
   private int logicalClock = 0;
 
   public Peer(int port) {
-    System.setProperty("java.net.preferIPv4Stack", "true");
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
       public void run() {
@@ -34,7 +33,7 @@ public class Peer implements DeliverCallback {
   public void send(String content) {
     logicalClock++; 
     Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
-    byte[] bytes = message.getFullMessage().getBytes();
+    byte[] bytes = message.getFullMessage();
     messenger.broadcast(bytes);
   }
 

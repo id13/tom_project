@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -13,9 +14,9 @@ import messages.engine.DeliverCallback;
 import messages.engine.Server;
 import messages.util.ByteUtil;
 import tom.Message;
-import tom.MessageAck;
+import tom.AckMessage;
 
-public class TestMessageAck {
+public class TestAckMessage {
 
   @Test
   public void test() {
@@ -23,8 +24,8 @@ public class TestMessageAck {
     MyServer myServer = new MyServer(42);
     MyChannel myChannel = new MyChannel(myServer);
     
-    MessageAck messageAck = new MessageAck(message1, myChannel, 789);
-    assertEquals(ByteUtil.computeCRC32(new String("Hi, how are you?").getBytes()),
+    AckMessage messageAck = new AckMessage(message1, myChannel, 789);
+    assertEquals(ByteUtil.computeCRC32(ByteUtil.writeString("Hi, how are you?")),
         messageAck.getCrc32());
     assertEquals(42, messageAck.getPortNumberAuthor());
     assertEquals(18, messageAck.getLogicalClockAuthor());
@@ -32,10 +33,10 @@ public class TestMessageAck {
     assertEquals(Message.TYPE_ACK, messageAck.getMessageType());
     
     Message messageAck2 = Message.getMessageReceived(messageAck.getFullMessage());
-    assertEquals(messageAck.getFullMessage(), messageAck2.getFullMessage());
+    assertTrue(Arrays.equals(messageAck.getFullMessage(), messageAck2.getFullMessage()));
     assertEquals(messageAck.getLogicalClock(), messageAck2.getLogicalClock());
     assertEquals(messageAck.getMessageType(), messageAck2.getMessageType());
-    MessageAck messageAck3 = (MessageAck) messageAck2;
+    AckMessage messageAck3 = (AckMessage) messageAck2;
     assertEquals(messageAck.getCrc32(), messageAck3.getCrc32());
     assertEquals(messageAck.getPortNumberAuthor(), messageAck3.getPortNumberAuthor());
     assertEquals(messageAck.getLogicalClockAuthor(), messageAck3.getLogicalClockAuthor());

@@ -1,6 +1,9 @@
 package messages.util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.zip.CRC32;
+
+import messages.engine.Engine;
 
 public class ByteUtil {
 
@@ -53,6 +56,26 @@ public class ByteUtil {
     val |= ((((long)bytes[offset+6]) & 0xffL) << 8);
     val |= (((long)bytes[offset+7]) & 0xffL);
     return val;
+  }
+  
+  static public String readString(byte[] bytes){
+    try {
+      return new String(bytes, "8859_1");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      Engine.panic("Unknown encoding: impossible exception");
+      return null;
+    }
+  }
+  
+  static public byte[] writeString(String string) {
+    try {
+      return string.getBytes("8859_1");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      Engine.panic("Unknown encoding: impossible exception");
+      return null;
+    }
   }
 
 }

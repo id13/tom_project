@@ -2,8 +2,10 @@ package tom.test;
 
 import static org.junit.Assert.*;
 
+
 import org.junit.Test;
 
+import messages.util.ByteUtil;
 import tom.Message;
 
 public class TestMessage {
@@ -28,7 +30,7 @@ public class TestMessage {
     bytes[4] = -128;
     bytes[5] = -127;
     bytes[6] = -100;
-    String gloomyMessage = new String(bytes);
+    String gloomyMessage = ByteUtil.readString(bytes);
     Message message3 = new Message(123456, Message.TYPE_MESSAGE, gloomyMessage);
     Message message4 = Message.getMessageReceived(message3.getFullMessage());
     assertEquals(message3.getLogicalClock(), message4.getLogicalClock());

@@ -8,7 +8,7 @@ import messages.engine.Engine;
 import messages.util.ByteUtil;
 
 /**
- * This class represent a Message waiting the acknowledgements of other peers of
+ * This class represent a Message waiting the acknowledgments of other peers of
  * the group to be delivered. It contains: The string representing the content
  * of the message. The logical clock of the message (the message of type
  * TYPE_MESSAGE) A set representing the channels from which we already received
@@ -64,8 +64,8 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    * @param message:
    *          The ACK received.
    */
-  public void addAck(Channel channel, MessageAck messageAck) {
-    if (messageAck.getCrc32() != ByteUtil.computeCRC32(content.getBytes())
+  public void addAck(Channel channel, AckMessage messageAck) {
+    if (messageAck.getCrc32() != ByteUtil.computeCRC32(ByteUtil.writeString(content))
         || messageAck.getLogicalClock() <= this.logicalClock) {
       Engine.panic("The ack doesn't correspond to the acked message"
         + " or there is a problem with the logical clock.");

@@ -8,7 +8,7 @@ public class Message {
   public static final byte TYPE_MESSAGE = (byte) 1;
   public static final byte TYPE_ACK = (byte) 2;
   public static final byte TYPE_JOIN = (byte) 3;
-  
+
   private int logicalClock;
   private byte messageType;
   private String content;
@@ -32,17 +32,16 @@ public class Message {
    * 
    * @param fullMessage
    */
-  public static Message getMessageReceived(String fullMessage) {
-    if (fullMessage.length() < 5) {
+  public static Message getMessageReceived(byte[] bytes) {
+    if (bytes.length < 5) {
       Engine.panic("This messages is to short so it can not have headers.");
     }
-    byte[] bytes = fullMessage.getBytes();
     int logicalClock = ByteUtil.readInt32(bytes, 0);
     byte messageType = bytes[4];
-    String content = fullMessage.substring(5);
+    String content = ByteUtil.readString(bytes).substring(5);
     Message message = new Message(logicalClock, messageType, content);
     if (messageType == TYPE_ACK) {
-      MessageAck messageAck = new MessageAck(message);
+      AckMessage messageAck = new AckMessage(message);
       return messageAck;
     } else {
       return message;
@@ -51,19 +50,15 @@ public class Message {
 
   /**
    * 
-   * @return the String representing the message including the headers
-   * and the content.
+   * @return the byte[] representing the message including the headers and the
+   *         content.
    */
-  public String getFullMessage() {
-    byte[] headers = new byte[5];
-    ByteUtil.writeInt32(headers, 0, logicalClock);
-    headers[4] = messageType;
-    String stringHeaders = new String(headers);
-    return stringHeaders + content;
-  }
-  
-  public MessageAck getMessageAck() {
-    return new MessageAck(this);
+  public byte[] getFullMessage() {
+    byte[] bytes = new byte[5 + content.length()];
+    ByteUtil.writeInt32(bytes, 0, logicalClock);
+    bytes[4] = messageType;
+    System.arraycopy(ByteUtil.writeString(content), 0, bytes, 5, content.length());
+    return bytes;
   }
 
   public int getLogicalClock() {
@@ -76,8 +71,8 @@ public class Message {
 
   /**
    * 
-   * @return the String representing the content encapsulated in the message.
-   * In particular, the headers are not included in it.
+   * @return the String representing the content encapsulated in the message. In
+   *         particular, the headers are not included in it.
    */
   public String getContent() {
     return content;
@@ -85,6 +80,7 @@ public class Message {
 
   /**
    * Used only for the builder of MessageAck.
+   * 
    * @param content
    */
   protected void setContent(String content) {
