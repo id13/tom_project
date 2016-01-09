@@ -74,6 +74,13 @@ public class MessageManager implements DeliverCallback {
 			waitingMessage = waitingMessages.peek();
 		}
 	}
+	
+	public void treatMyMessage(Message message) {
+		WaitingMessage waitingMessage = new WaitingMessage(message, peer.getPort());
+		waitingMessages.add(waitingMessage);
+		// Only for the situation where the group size is 1:
+		deliverHeadIfNeeded();
+	}
 
 	private class EarlyAck {
 		AckMessage ack;

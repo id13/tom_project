@@ -1,5 +1,6 @@
 package tom;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import messages.engine.Channel;
@@ -9,11 +10,15 @@ import messages.engine.nio.NioEngine;
 
 public class PeerImpl implements Peer {
 
+  private final int port;
   private final Messenger messenger;
   private final MessageManager messagesStock;
   private int logicalClock = 0;
+  private Set<Channel> channels;
 
   public PeerImpl(int port, TomDeliverCallback callback) {
+  	this.port = port;
+  	this.channels = new HashSet<>();
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
       public void run() {
@@ -37,13 +42,22 @@ public class PeerImpl implements Peer {
   public void send(String content) {
     logicalClock++; 
     Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
-    byte[] bytes = message.getFullMessage();
-    messenger.broadcast(bytes);
+    messagesStock.treatMyMessage(message);
+    messenger.broadcast(message.getFullMessage());
   }
 
   @Override
   public Set<Channel> getChannelGroup() {
-    // TODO Auto-generated method stub
-    return null;
+  	return this.channels;
   }
+
+	@Override
+	public int getPort() {
+		return this.port;
+	}
+
+	@Override
+	public void connect(int port) {
+		messenger.connect("localhost", port);
+	}
 }

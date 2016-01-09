@@ -111,6 +111,15 @@ public class TestMessageManager {
 		public int getNumberOfDeliveredMessages() {
 			return this.numberOfDeliveredMessages;
 		}
+
+		@Override
+		public int getPort() {
+			return 42;
+		}
+
+		@Override
+		public void connect(int port) {			
+		}
   }
   
   public class MyServer extends Server {
