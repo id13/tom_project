@@ -17,7 +17,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
   private Engine engine;
   private int port;
-  private Map<Server, Channel> channels = new HashMap<Server, Channel>();
+  private List<Channel> channels = new ArrayList<Channel>();
   private Server acceptServer;
   private DeliverCallback deliverCallback;
   private ConnectCallback connectCallback;
@@ -39,7 +39,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
   @Override
   public void connected(Channel channel) {
-    this.channels.put(channel.getServer(), channel);
+    this.channels.add(channel);
     if (this.connectCallback != null) {
     	this.connectCallback.connected(channel);
     }
@@ -48,7 +48,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   @Override
   public void accepted(Server server, Channel channel) {
     channel.setServer(server);
-    this.channels.put(server, channel);
+    this.channels.add(channel);
   }
 
   @Override
@@ -63,9 +63,9 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   }
   
   public synchronized void broadcast(byte[] bytes) {
-    for(Entry<Server, Channel> channel : channels.entrySet()) {
+    for(Channel channel : channels) {
       try {
-        channel.getValue().send(bytes, 0, bytes.length);
+        channel.send(bytes, 0, bytes.length);
       } catch (IOException e) {
         e.printStackTrace();
         Engine.panic(e.getMessage());
@@ -96,8 +96,8 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
   public void closeAllConnections() {
     this.stopAccept();
-    for(Entry<Server, Channel> channel : channels.entrySet()) {
-      channel.getValue().close();
+    for(Channel channel : channels) {
+      channel.close();
     }
   }
   
@@ -115,8 +115,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     return this.acceptServer.getPort();
   }
   
-  public void send(Server server, byte[] bytes) {
-    Channel channel = channels.get(server);
+  public void send(Channel channel, byte[] bytes) {
     if(channel == null)
       Engine.panic("send: the specified server was not found");
     try {
