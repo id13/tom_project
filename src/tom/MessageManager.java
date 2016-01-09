@@ -28,6 +28,7 @@ public class MessageManager implements DeliverCallback {
 	@Override
 	public void deliver(Channel channel, byte[] bytes) {
 		Message message = Message.getMessageReceived(bytes);
+		System.out.println("Message reçu (non délivré) de "+channel.getServer().getPort()+" : "+message);
 		if (message.getMessageType() == Message.TYPE_MESSAGE) {
 			treatMessage(message, channel);
 		} else if (message.getMessageType() == Message.TYPE_ACK) {

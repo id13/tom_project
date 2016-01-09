@@ -78,4 +78,9 @@ public class AckMessage extends Message {
   public long getCrc32() {
     return crc32;
   }
+  
+  @Override
+  public String toString() {
+  	return "ACK: LC: "+ logicalClockAuthor+"; authorLC: " + logicalClockAuthor+"; portAuthor: "+portNumberAuthor+ "; CRC: "+ crc32;
+  }
 }
