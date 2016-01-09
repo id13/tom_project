@@ -21,6 +21,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   private Server acceptServer;
   private DeliverCallback deliverCallback;
   private ConnectCallback connectCallback;
+	private AcceptCallback acceptCallback;
   
   public Messenger(Engine engine, int port) {
     super();
@@ -49,6 +50,9 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   public void accepted(Server server, Channel channel) {
     channel.setServer(server);
     this.channels.add(channel);
+    if (this.acceptCallback != null) {
+    	this.acceptCallback.accepted(server, channel);
+    }
   }
 
   @Override
@@ -144,5 +148,8 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 	public void setConnectCallback(ConnectCallback connectCallback) {
 		this.connectCallback = connectCallback;
 	}
-  
+
+	public void setAcceptCallback(AcceptCallback acceptCallback) {
+		this.acceptCallback = acceptCallback;
+	}
 }

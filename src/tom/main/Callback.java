@@ -12,7 +12,7 @@ public class Callback implements TomDeliverCallback {
 
 	@Override
 	public void deliver(String message) {
-		System.out.println(name + ": " + message);
+		System.out.println("Delivered by TOM layer: " + message);
 
 	}
 }

@@ -19,9 +19,9 @@ public interface Peer {
 
 	/**
 	 * 
-	 * @return The addresses of the other members of the group.
+	 * @return The instance of the class managing distant peers and channels.
 	 */
-	public Set<InetSocketAddress> getGroup();
+	public DistantPeerManager getDistantPeerManager();
 	
 	/**
 	 * 

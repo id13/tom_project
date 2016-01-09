@@ -81,27 +81,6 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 		receivedAck.add(address);
 	}
 
-	/**
-	 * Ask to the WaitingMessage if all the ACK have been received.
-	 * 
-	 * @param group:
-	 *          A set containing all the address from which we must receive ACK.
-	 * @return true if all the ACK have been received.
-	 */
-	public boolean isReadyToDeliver(Set<InetSocketAddress> group) {
-		// Not != because a distant peer could have left.
-		if (receivedAck.size() < group.size()) {
-			return false;
-		} else {
-			for (InetSocketAddress distantPeer : group) {
-				if (!receivedAck.contains(distantPeer)) {
-					return false;
-				}
-			}
-			return true;
-		}
-	}
-
 	public String getContent() {
 		return content;
 	}
@@ -138,4 +117,9 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	public InetSocketAddress getAuthor() {
 		return author;
 	}
+
+	public Set<InetSocketAddress> getReceivedAck() {
+		return receivedAck;
+	}
+	
 }

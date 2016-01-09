@@ -14,6 +14,7 @@ import messages.engine.ClosableCallback;
 import messages.engine.DeliverCallback;
 import messages.engine.Server;
 import tom.AckMessage;
+import tom.DistantPeerManager;
 import tom.Message;
 import tom.MessageManager;
 import tom.Peer;
@@ -32,10 +33,11 @@ public class TestMessageManager {
 		MyChannel channel3 = new MyChannel(address3);
 		MyPeer myPeer = new MyPeer(myAddress);
 		myPeer.setCorrectMessage("Nothing should be received now.");
-		myPeer.addToGroup(address1);
-		myPeer.addToGroup(address2);
-		myPeer.addToGroup(address3);
-		MessageManager messageManager = new MessageManager(myPeer, myPeer, null);
+		DistantPeerManager manager = myPeer.getDistantPeerManager();
+		manager.addChannel(channel1);
+		manager.addChannel(channel2);
+		manager.addChannel(channel3);
+		MessageManager messageManager = new MessageManager(myPeer, myPeer, null, manager);
 
 		// On envoit un message "Message1" sur le canal 1,
 		// suivi des acks des canaux 2 et 3:
@@ -76,10 +78,10 @@ public class TestMessageManager {
 
 	public class MyPeer implements Peer, TomDeliverCallback {
 
-		private Set<InetSocketAddress> group = new HashSet<>();
 		private String correctMessage;
 		private int numberOfDeliveredMessages = 0;
 		private final InetSocketAddress myAddress;
+		private final DistantPeerManager distantPeerManager = new DistantPeerManager();
 
 		public MyPeer(InetSocketAddress myAddress) {
 			this.myAddress = myAddress;
@@ -116,17 +118,13 @@ public class TestMessageManager {
 		}
 
 		@Override
-		public Set<InetSocketAddress> getGroup() {
-			return group;
-		}
-
-		@Override
 		public InetSocketAddress getMyAddress() {
 			return myAddress;
 		}
 
-		public void addToGroup(InetSocketAddress address) {
-			this.group.add(address);
+		@Override
+		public DistantPeerManager getDistantPeerManager() {
+			return this.distantPeerManager;
 		}
 
 	}

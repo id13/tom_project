@@ -26,11 +26,13 @@ public class MessageManager implements DeliverCallback {
 	private final Peer peer;
 	private final TomDeliverCallback tomDeliverCallback;
 	private final Messenger messenger;
+	private final DistantPeerManager distantPeerManager;
 
-	public MessageManager(Peer peer, TomDeliverCallback tomDeliverCallback, Messenger messenger) {
+	public MessageManager(Peer peer, TomDeliverCallback tomDeliverCallback, Messenger messenger, DistantPeerManager distantPeerManager) {
 		this.peer = peer;
 		this.tomDeliverCallback = tomDeliverCallback;
 		this.messenger = messenger;
+		this.distantPeerManager = distantPeerManager;
 	}
 
 	/*
@@ -43,8 +45,8 @@ public class MessageManager implements DeliverCallback {
 	@Override
 	public void deliver(Channel channel, byte[] bytes) {
 		Message message = Message.getMessageReceived(bytes);
-		InetSocketAddress address = null;
-		address = message.getAuthor();
+		InetSocketAddress address = message.getAuthor();
+		distantPeerManager.addId(channel, address);
 		System.out.println("Received message (not delivered) from " + address + " : " + message);
 
 		if (message.getMessageType() == Message.TYPE_MESSAGE) {
@@ -125,7 +127,7 @@ public class MessageManager implements DeliverCallback {
 	 */
 	private void deliverHeadIfNeeded() {
 		WaitingMessage waitingMessage = waitingMessages.peek();
-		while (waitingMessage != null && waitingMessage.isReadyToDeliver(peer.getGroup())) {
+		while (waitingMessage != null && distantPeerManager.allAckReceived(waitingMessage)) {
 			waitingMessages.remove();
 			tomDeliverCallback.deliver(waitingMessage.getContent());
 			waitingMessage = waitingMessages.peek();
