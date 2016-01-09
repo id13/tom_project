@@ -37,7 +37,7 @@ public class TestMessageManager {
 
 		MyPeer myPeer = new MyPeer(channels);
 		myPeer.setCorrectMessage("Nothing should be received now.");
-		MessageManager messageManager = new MessageManager(myPeer, myPeer);
+		MessageManager messageManager = new MessageManager(myPeer, myPeer, null);
 
 		// On envoit un message "Message1" sur le canal 1,
 		// suivi des acks des canaux 2 et 3:

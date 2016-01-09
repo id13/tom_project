@@ -28,8 +28,8 @@ public class PeerImpl implements Peer, ConnectCallback {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    this.messageManager = new MessageManager(this, callback);
     this.messenger = new Messenger(engine, port);
+    this.messageManager = new MessageManager(this, callback, messenger);
     this.messenger.setDeliverCallback(messageManager);
     this.messenger.setConnectCallback(this);
     try {

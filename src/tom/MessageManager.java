@@ -8,18 +8,21 @@ import java.util.Set;
 import messages.engine.Channel;
 import messages.engine.DeliverCallback;
 import messages.engine.Engine;
+import messages.engine.Messenger;
 import messages.util.ByteUtil;
 
 public class MessageManager implements DeliverCallback {
 
 	private Set<EarlyAck> ackReceivedBeforeTheirMessages = new HashSet<>();
 	private PriorityQueue<WaitingMessage> waitingMessages = new PriorityQueue<>();
-	private Peer peer;
-	private TomDeliverCallback tomDeliverCallback;
+	private final Peer peer;
+	private final TomDeliverCallback tomDeliverCallback;
+	private final Messenger messenger;
 
-	public MessageManager(Peer peer, TomDeliverCallback tomDeliverCallback) {
+	public MessageManager(Peer peer, TomDeliverCallback tomDeliverCallback, Messenger messenger) {
 		this.peer = peer;
 		this.tomDeliverCallback = tomDeliverCallback;
+		this.messenger = messenger;
 	}
 
 	@Override
@@ -37,7 +40,9 @@ public class MessageManager implements DeliverCallback {
 	private void treatMessage(Message message, Channel channel) {
 		int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
 		AckMessage ourAck = new AckMessage(message, channel, logicalClock);
-		peer.send(ByteUtil.readString(ourAck.getFullMessage()));
+		if (messenger != null) { // Useful in JUnitTest
+			messenger.broadcast(ourAck.getFullMessage());
+		}
 		WaitingMessage waitingMessage = new WaitingMessage(message, channel);
 		// We will perhaps remove elements from the Set so we have to use an
 		// Iterator like that:
