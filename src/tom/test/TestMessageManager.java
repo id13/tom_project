@@ -107,7 +107,7 @@ public class TestMessageManager {
 		}
 
 		@Override
-		public void connect(int port) {
+		public void connect(InetSocketAddress address) {
 		}
 
 		@Override

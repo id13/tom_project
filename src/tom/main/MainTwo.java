@@ -16,7 +16,7 @@ public class MainTwo {
 		InetAddress myIpAddress = Inet4Address.getLocalHost();
 		InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12381);
 		Peer peer2 = new PeerImpl(myAddress, callback2);
-		peer2.connect(12380);
+		peer2.connect(new InetSocketAddress("localhost", 12380));
 	}
 
 }

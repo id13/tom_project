@@ -16,8 +16,8 @@ public class MainThree {
 		InetAddress myIpAddress = Inet4Address.getLocalHost();
 		InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12382);
 		Peer peer3 = new PeerImpl(myAddress, callback3);
-		peer3.connect(12380);
-		peer3.connect(12381);
+		peer3.connect(new InetSocketAddress("localhost", 12380));
+		peer3.connect(new InetSocketAddress("localhost", 12381));
 		Runnable runnable = new Runnable() {
 
 			@Override

@@ -13,46 +13,55 @@ import messages.engine.nio.NioEngine;
 
 public class PeerImpl implements Peer, ConnectCallback {
 
-  private final Messenger messenger;
-  private final MessageManager messageManager;
-  private int logicalClock = 0;
+	private final Messenger messenger;
+	private final MessageManager messageManager;
+	private int logicalClock = 0;
 	private final InetSocketAddress myAddress;
 	private Set<InetSocketAddress> group;
 
-  public PeerImpl(InetSocketAddress myAddress, TomDeliverCallback callback) {
-  	this.myAddress = myAddress;
-  	this.group = new HashSet<>();
-    NioEngine engine = NioEngine.getNioEngine();
-    Runnable engineLoop = new Runnable() {
-      public void run() {
-        engine.mainloop();
-      }
-    };
-    Thread engineThread = new Thread(engineLoop, "engineThread");
-    engineThread.start();
-    this.messenger = new Messenger(engine, myAddress.getPort());
-    this.messageManager = new MessageManager(this, callback, messenger);
-    this.messenger.setDeliverCallback(messageManager);
-    this.messenger.setConnectCallback(this);
-    try {
-      messenger.accept();
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      Engine.panic(ex.getMessage());
-    }
-  }
-  
-  @Override
-  public void send(String content) {
-    logicalClock++; 
-    Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
-    messageManager.treatMyMessage(message);
-    messenger.broadcast(message.getFullMessage());
-  }
+	/**
+	 * This builder initiates a Peer. So, it initiates a NioEngine, a Messenger
+	 * and a MessageManager. It then call the accept method of the Messenger.
+	 * 
+	 * @param myAddress:
+	 *          The IPv4 address and the port number of the Accept.
+	 * @param callback:
+	 *          The callback used to display delivered messages.
+	 */
+	public PeerImpl(InetSocketAddress myAddress, TomDeliverCallback callback) {
+		this.myAddress = myAddress;
+		this.group = new HashSet<>();
+		NioEngine engine = NioEngine.getNioEngine();
+		Runnable engineLoop = new Runnable() {
+			public void run() {
+				engine.mainloop();
+			}
+		};
+		Thread engineThread = new Thread(engineLoop, "engineThread");
+		engineThread.start();
+		this.messenger = new Messenger(engine, myAddress.getPort());
+		this.messageManager = new MessageManager(this, callback, messenger);
+		this.messenger.setDeliverCallback(messageManager);
+		this.messenger.setConnectCallback(this);
+		try {
+			messenger.accept();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			Engine.panic(ex.getMessage());
+		}
+	}
 
 	@Override
-	public void connect(int port) {
-		messenger.connect("localhost", port);
+	public void send(String content) {
+		logicalClock++;
+		Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
+		messageManager.treatMyMessage(message);
+		messenger.broadcast(message.getFullMessage());
+	}
+
+	@Override
+	public void connect(InetSocketAddress address) {
+		messenger.connect(address.getHostName(), address.getPort());
 	}
 
 	@Override
@@ -69,7 +78,7 @@ public class PeerImpl implements Peer, ConnectCallback {
 	@Override
 	public void closed(Channel channel) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
