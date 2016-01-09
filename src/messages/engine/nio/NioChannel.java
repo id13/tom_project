@@ -46,7 +46,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
     this.sendingState = NOT_SENDING;
     this.receivingState = READING_LENGTH;
     this.dataToSend = new ConcurrentLinkedQueue<>();
-    this.remoteLocalAddress = (InetSocketAddress) (channel.getLocalAddress());
+    this.remoteLocalAddress = (InetSocketAddress) (channel.getRemoteAddress());
   }
   
   @Override
