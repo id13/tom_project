@@ -14,145 +14,111 @@ import messages.engine.ClosableCallback;
 import messages.engine.DeliverCallback;
 import messages.engine.Server;
 import tom.Message;
+import tom.Peer;
 import tom.AckMessage;
 import tom.WaitingMessage;
 
 public class TestWaitingMessage {
 
-  @Test
-  public void test1() {
-    MyServer server1 = new MyServer(1);
-    MyServer server2 = new MyServer(2);
-    MyServer server3 = new MyServer(3);
-    MyServer server4 = new MyServer(4);
-    MyServer myServer = new MyServer(42);
+	@Test
+	public void test1() {
 
-    MyChannel channel1 = new MyChannel(server1);
-    MyChannel channel2 = new MyChannel(server2);
-    MyChannel channel3 = new MyChannel(server3);
-    MyChannel channel4 = new MyChannel(server4);
+		InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
+		InetSocketAddress address1 = new InetSocketAddress("localhost", 12351);
+		InetSocketAddress address2 = new InetSocketAddress("localhost", 12352);
+		InetSocketAddress address3 = new InetSocketAddress("localhost", 12353);
+		InetSocketAddress address4 = new InetSocketAddress("localhost", 12354);
+		
+		MyPeer myPeer = new MyPeer(myAddress);
+		Message message = new Message(123, Message.TYPE_MESSAGE, "Hi, how are you?");
+		WaitingMessage waitingMessage = new WaitingMessage(message, myPeer);
+		assertEquals("Hi, how are you?", waitingMessage.getContent());
+		assertEquals(123, waitingMessage.getLogicalClock());
 
-    MyChannel myChannel = new MyChannel(myServer);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address1);
+		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		AckMessage messageAck1 = new AckMessage(message, address1, 456);
+		waitingMessage.addAck(address1, messageAck1);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		AckMessage messageAck2 = new AckMessage(message, address1, 321);
+		waitingMessage.addAck(address2, messageAck2);
+		AckMessage messageAck3 = new AckMessage(message, address3, 400);
+		waitingMessage.addAck(address3, messageAck3);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address2);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address3);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address4);
+		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		AckMessage messageAck4 = new AckMessage(message, address4, 450);
+		waitingMessage.addAck(address4, messageAck4);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+	}
 
-    Message message = new Message(123, Message.TYPE_MESSAGE, "Hi, how are you?");
-    WaitingMessage waitingMessage = new WaitingMessage(message, 42);
-    assertEquals("Hi, how are you?", waitingMessage.getContent());
-    assertEquals(123, waitingMessage.getLogicalClock());
+	@Test
+	public void test2() {
+		InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
+		InetSocketAddress address1 = new InetSocketAddress("localhost", 12351);
+		InetSocketAddress address2 = new InetSocketAddress("localhost", 12352);
+		InetSocketAddress address3 = new InetSocketAddress("localhost", 12353);
+		InetSocketAddress address4 = new InetSocketAddress("localhost", 12354);
+		
+		MyPeer myPeer = new MyPeer(myAddress);
 
-    Set<Channel> channels = new HashSet<>();
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel1);
-    assertFalse(waitingMessage.isReadyToDeliver(channels));
-    AckMessage messageAck1 = new AckMessage(message, channel1, 456);
-    waitingMessage.addAck(channel1, messageAck1);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    AckMessage messageAck2 = new AckMessage(message, channel2, 321);
-    waitingMessage.addAck(channel2, messageAck2);
-    AckMessage messageAck3 = new AckMessage(message, channel3, 400);
-    waitingMessage.addAck(channel3, messageAck3);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel2);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel3);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel4);
-    assertFalse(waitingMessage.isReadyToDeliver(channels));
-    AckMessage messageAck4 = new AckMessage(message, channel4, 450);
-    waitingMessage.addAck(channel4, messageAck4);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-  }
+		Message message = new Message(12, Message.TYPE_MESSAGE, "Hi, how are you?");
+		WaitingMessage waitingMessage = new WaitingMessage(message, address1);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address1);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		AckMessage messageAck2 = new AckMessage(message, address2, 321);
+		waitingMessage.addAck(address2, messageAck2);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address2);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		myPeer.addToGroup(address3);
+		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+		AckMessage messageAck3 = new AckMessage(message, address3, 123);
+		waitingMessage.addAck(address3, messageAck3);
+		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
+	}
 
-  @Test
-  public void test2() {
-    MyServer server1 = new MyServer(1);
-    MyServer server2 = new MyServer(2);
-    MyServer server3 = new MyServer(3);
-    MyServer server4 = new MyServer(4);
+	private class MyPeer implements Peer {
 
-    MyChannel channel1 = new MyChannel(server1);
-    MyChannel channel2 = new MyChannel(server2);
-    MyChannel channel3 = new MyChannel(server3);
-    MyChannel channel4 = new MyChannel(server4);
-    
-    Message message = new Message(12, Message.TYPE_MESSAGE, "Hi, how are you?");
-    WaitingMessage waitingMessage = new WaitingMessage(message, channel1);
-    Set<Channel> channels = new HashSet<>();
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel1);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    AckMessage messageAck2 = new AckMessage(message, channel2, 321);
-    waitingMessage.addAck(channel2, messageAck2);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel2);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-    channels.add(channel3);
-    assertFalse(waitingMessage.isReadyToDeliver(channels));
-    AckMessage messageAck3 = new AckMessage(message, channel3, 123);
-    waitingMessage.addAck(channel3, messageAck3);
-    assertTrue(waitingMessage.isReadyToDeliver(channels));
-  }
+		private InetSocketAddress myAddress;
+		private Set<InetSocketAddress> group = new HashSet<>();
 
-  public class MyServer extends Server {
+		private MyPeer(InetSocketAddress myAddress) {
+			this.myAddress = myAddress;
+		}
 
-    private int port;
+		@Override
+		public void connect(int port) {
+		}
 
-    public MyServer(int port) {
-      this.port = port;
-    }
+		@Override
+		public void send(String content) {
+		}
 
-    @Override
-    public int getPort() {
-      return port;
-    }
+		@Override
+		public Set<InetSocketAddress> getGroup() {
+			return this.group;
+		}
 
-    @Override
-    public void close() throws IOException {
-    }
-  }
+		@Override
+		public InetSocketAddress getMyAddress() {
+			return this.myAddress;
+		}
 
-  public class MyChannel extends Channel {
+		@Override
+		public int updateLogicalClock(int outsideLogicalClock) {
+			return 0;
+		}
 
-    private Server server;
+		public void addToGroup(InetSocketAddress address) {
+			this.group.add(address);
+		}
 
-    public MyChannel(Server server) {
-      this.server = server;
-    }
-
-    @Override
-    public int compareTo(Channel o) {
-      return 0;
-    }
-
-    @Override
-    public void setDeliverCallback(DeliverCallback callback) {
-    }
-
-    @Override
-    public InetSocketAddress getRemoteAddress() throws IOException {
-      return null;
-    }
-
-    @Override
-    public void send(byte[] bytes, int offset, int length) throws IOException {
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public void setServer(Server server) {
-      this.server = server;
-    }
-
-    @Override
-    public Server getServer() {
-      return server;
-    }
-
-    @Override
-    public void setClosableCallback(ClosableCallback callback) {
-    }
-  }
-
+	}
 }

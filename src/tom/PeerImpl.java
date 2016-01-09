@@ -1,5 +1,7 @@
 package tom;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,15 +13,15 @@ import messages.engine.nio.NioEngine;
 
 public class PeerImpl implements Peer, ConnectCallback {
 
-  private final int port;
   private final Messenger messenger;
   private final MessageManager messageManager;
   private int logicalClock = 0;
-  private Set<Channel> channels;
+	private final InetSocketAddress myAddress;
+	private Set<InetSocketAddress> group;
 
-  public PeerImpl(int port, TomDeliverCallback callback) {
-  	this.port = port;
-  	this.channels = new HashSet<>();
+  public PeerImpl(InetSocketAddress myAddress, TomDeliverCallback callback) {
+  	this.myAddress = myAddress;
+  	this.group = new HashSet<>();
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
       public void run() {
@@ -28,7 +30,7 @@ public class PeerImpl implements Peer, ConnectCallback {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    this.messenger = new Messenger(engine, port);
+    this.messenger = new Messenger(engine, myAddress.getPort());
     this.messageManager = new MessageManager(this, callback, messenger);
     this.messenger.setDeliverCallback(messageManager);
     this.messenger.setConnectCallback(this);
@@ -47,16 +49,6 @@ public class PeerImpl implements Peer, ConnectCallback {
     messageManager.treatMyMessage(message);
     messenger.broadcast(message.getFullMessage());
   }
-
-  @Override
-  public Set<Channel> getChannelGroup() {
-  	return this.channels;
-  }
-
-	@Override
-	public int getPort() {
-		return this.port;
-	}
 
 	@Override
 	public void connect(int port) {
@@ -82,8 +74,24 @@ public class PeerImpl implements Peer, ConnectCallback {
 
 	@Override
 	public void connected(Channel channel) {
-		channels.add(channel);
+		try {
+			group.add(channel.getRemoteAddress());
+		} catch (IOException e) {
+			e.printStackTrace();
+			Engine.panic(e.getMessage());
+			// TODO: handle that correctly.
+		}
 		// TODO: later, we will add to channels only the new peers of the group
 		// But there, we assume that the group is created before to use it.
+	}
+
+	@Override
+	public Set<InetSocketAddress> getGroup() {
+		return group;
+	}
+
+	@Override
+	public InetSocketAddress getMyAddress() {
+		return myAddress;
 	}
 }

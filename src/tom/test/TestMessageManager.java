@@ -23,27 +23,25 @@ public class TestMessageManager {
 
 	@Test
 	public void test() {
-		MyServer server1 = new MyServer(1);
-		MyServer server2 = new MyServer(2);
-		MyServer server3 = new MyServer(3);
-		MyChannel channel1 = new MyChannel(server1);
-		MyChannel channel2 = new MyChannel(server2);
-		MyChannel channel3 = new MyChannel(server3);
-
-		Set<Channel> channels = new HashSet<>();
-		channels.add(channel1);
-		channels.add(channel2);
-		channels.add(channel3);
-
-		MyPeer myPeer = new MyPeer(channels);
+		InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
+		InetSocketAddress address1 = new InetSocketAddress("localhost", 12351);
+		InetSocketAddress address2 = new InetSocketAddress("localhost", 12352);
+		InetSocketAddress address3 = new InetSocketAddress("localhost", 12353);
+		MyChannel channel1 = new MyChannel(address1);
+		MyChannel channel2 = new MyChannel(address2);
+		MyChannel channel3 = new MyChannel(address3);
+		MyPeer myPeer = new MyPeer(myAddress);
 		myPeer.setCorrectMessage("Nothing should be received now.");
+		myPeer.addToGroup(address1);
+		myPeer.addToGroup(address2);
+		myPeer.addToGroup(address3);
 		MessageManager messageManager = new MessageManager(myPeer, myPeer, null);
 
 		// On envoit un message "Message1" sur le canal 1,
 		// suivi des acks des canaux 2 et 3:
 		Message message1 = new Message(0, Message.TYPE_MESSAGE, "Message1");
-		AckMessage ack12 = new AckMessage(message1, channel1, 1);
-		AckMessage ack13 = new AckMessage(message1, channel1, 7);
+		AckMessage ack12 = new AckMessage(message1, address1, 1);
+		AckMessage ack13 = new AckMessage(message1, address1, 7);
 		messageManager.deliver(channel1, message1.getFullMessage());
 		messageManager.deliver(channel2, ack12.getFullMessage());
 		myPeer.setCorrectMessage("Message1");
@@ -54,8 +52,8 @@ public class TestMessageManager {
 		// On envoit Le ack2 du Message2, suivi du message2,
 		// suivi du ack du canal 3.
 		Message message2 = new Message(40, Message.TYPE_MESSAGE, "Message2");
-		AckMessage ack22 = new AckMessage(message2, channel1, 42);
-		AckMessage ack23 = new AckMessage(message2, channel1, 41);
+		AckMessage ack22 = new AckMessage(message2, address1, 42);
+		AckMessage ack23 = new AckMessage(message2, address1, 41);
 		messageManager.deliver(channel2, ack22.getFullMessage());
 		messageManager.deliver(channel1, message2.getFullMessage());
 		myPeer.setCorrectMessage("Message2");
@@ -66,8 +64,8 @@ public class TestMessageManager {
 		// On envoit Le ack2 du Message3, suivi du ack3 du message3,
 		// suivi du message3.
 		Message message3 = new Message(80, Message.TYPE_MESSAGE, "Message3");
-		AckMessage ack32 = new AckMessage(message3, channel1, 83);
-		AckMessage ack33 = new AckMessage(message3, channel1, 82);
+		AckMessage ack32 = new AckMessage(message3, address1, 83);
+		AckMessage ack33 = new AckMessage(message3, address1, 82);
 		messageManager.deliver(channel2, ack32.getFullMessage());
 		messageManager.deliver(channel3, ack33.getFullMessage());
 		myPeer.setCorrectMessage("Message3");
@@ -78,21 +76,17 @@ public class TestMessageManager {
 
 	public class MyPeer implements Peer, TomDeliverCallback {
 
-		private final Set<Channel> channels;
+		private Set<InetSocketAddress> group = new HashSet<>();
 		private String correctMessage;
 		private int numberOfDeliveredMessages = 0;
+		private final InetSocketAddress myAddress;
 
-		public MyPeer(Set<Channel> channels) {
-			this.channels = channels;
+		public MyPeer(InetSocketAddress myAddress) {
+			this.myAddress = myAddress;
 		}
 
 		@Override
 		public void send(String content) {
-		}
-
-		@Override
-		public Set<Channel> getChannelGroup() {
-			return this.channels;
 		}
 
 		@Override
@@ -113,11 +107,6 @@ public class TestMessageManager {
 		}
 
 		@Override
-		public int getPort() {
-			return 42;
-		}
-
-		@Override
 		public void connect(int port) {
 		}
 
@@ -125,32 +114,28 @@ public class TestMessageManager {
 		public int updateLogicalClock(int outsideLogicalClock) {
 			return outsideLogicalClock + 1;
 		}
-	}
 
-	public class MyServer extends Server {
-
-		private int port;
-
-		public MyServer(int port) {
-			this.port = port;
+		@Override
+		public Set<InetSocketAddress> getGroup() {
+			return group;
 		}
 
 		@Override
-		public int getPort() {
-			return port;
+		public InetSocketAddress getMyAddress() {
+			return myAddress;
 		}
 
-		@Override
-		public void close() throws IOException {
+		public void addToGroup(InetSocketAddress address) {
+			this.group.add(address);
 		}
+
 	}
 
-	public class MyChannel extends Channel {
+	private class MyChannel extends Channel {
+		InetSocketAddress address;
 
-		private Server server;
-
-		public MyChannel(Server server) {
-			this.server = server;
+		public MyChannel(InetSocketAddress address) {
+			this.address = address;
 		}
 
 		@Override
@@ -164,7 +149,7 @@ public class TestMessageManager {
 
 		@Override
 		public InetSocketAddress getRemoteAddress() throws IOException {
-			return null;
+			return this.address;
 		}
 
 		@Override
@@ -177,16 +162,16 @@ public class TestMessageManager {
 
 		@Override
 		public void setServer(Server server) {
-			this.server = server;
 		}
 
 		@Override
 		public Server getServer() {
-			return server;
+			return null;
 		}
 
 		@Override
 		public void setClosableCallback(ClosableCallback callback) {
 		}
+
 	}
 }

@@ -1,8 +1,7 @@
 package tom;
 
+import java.net.InetSocketAddress;
 import java.util.Set;
-
-import messages.engine.Channel;
 
 public interface Peer {
 
@@ -10,9 +9,9 @@ public interface Peer {
 	
 	public void send(String content);
 
-	public Set<Channel> getChannelGroup();
+	public Set<InetSocketAddress> getGroup();
 	
-	public int getPort();
+	public InetSocketAddress getMyAddress();
 	
 	int updateLogicalClock(int outsideLogicalClock);
 }
