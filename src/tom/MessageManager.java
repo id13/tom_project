@@ -44,13 +44,7 @@ public class MessageManager implements DeliverCallback {
 	public void deliver(Channel channel, byte[] bytes) {
 		Message message = Message.getMessageReceived(bytes);
 		InetSocketAddress address = null;
-		try {
-			address = channel.getRemoteAddress();
-		} catch (IOException e) {
-			e.printStackTrace();
-			Engine.panic(e.getMessage());
-			// TODO: handle that correctly.
-		}
+		address = message.getAuthor();
 		System.out.println("Received message (not delivered) from " + address + " : " + message);
 
 		if (message.getMessageType() == Message.TYPE_MESSAGE) {
@@ -76,7 +70,7 @@ public class MessageManager implements DeliverCallback {
 	 */
 	private void treatMessage(Message message, InetSocketAddress address) {
 		int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
-		AckMessage ourAck = new AckMessage(message, address, logicalClock);
+		AckMessage ourAck = new AckMessage(message, address, logicalClock, peer.getMyAddress());
 		if (messenger != null) { // Useful in JUnitTest
 			messenger.broadcast(ourAck.getFullMessage());
 		}
@@ -86,7 +80,7 @@ public class MessageManager implements DeliverCallback {
 		for (Iterator<EarlyAck> it = earlyAcks.iterator(); it.hasNext();) {
 			EarlyAck earlyAck = it.next();
 			AckMessage ack = earlyAck.getAck();
-			if (ack.getLogicalClockAuthor() == message.getLogicalClock() && ack.getAuthor().equals(address)) {
+			if (ack.getLogicalClockAuthor() == message.getLogicalClock() && ack.getAuthorOfAckedMessage().equals(address)) {
 				waitingMessage.addAck(earlyAck.getAddress(), ack);
 				it.remove();
 			}
@@ -110,7 +104,8 @@ public class MessageManager implements DeliverCallback {
 		peer.updateLogicalClock(ack.getLogicalClock());
 		boolean foundInQueue = false;
 		for (WaitingMessage waitingMessage : waitingMessages) {
-			if (waitingMessage.getLogicalClock() == ack.getLogicalClockAuthor() && waitingMessage.getAuthor().equals(ack.getAuthor())) {
+			if (waitingMessage.getLogicalClock() == ack.getLogicalClockAuthor()
+			    && waitingMessage.getAuthor().equals(ack.getAuthorOfAckedMessage())) {
 				waitingMessage.addAck(address, ack);
 				foundInQueue = true;
 				deliverHeadIfNeeded();

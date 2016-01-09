@@ -18,7 +18,7 @@ import messages.util.ByteUtil;
 public class AckMessage extends Message {
 
 	private int logicalClockAuthor;
-	private InetSocketAddress author;
+	private InetSocketAddress authorOfAckedMessage;
 	private long crc32;
 
 	/**
@@ -27,22 +27,25 @@ public class AckMessage extends Message {
 	 * create the AckMessage, we use this builder.
 	 * 
 	 * @param messageToAck
-	 * @param author
+	 * @param messageAuthor
 	 *          : The InetSocketAddress of the message's author.
 	 * @param myLogicalClock
 	 *          : The logical clock of our own Server.
+	 * @param ackAuthor:
+	 *          the author of the AckMessage we are creating.
 	 */
-	public AckMessage(Message messageToAck, InetSocketAddress author, int myLogicalClock) {
-		super(myLogicalClock, Message.TYPE_ACK, "complete later with setContent");
+	public AckMessage(Message messageToAck, InetSocketAddress messageAuthor, int myLogicalClock,
+	    InetSocketAddress ackAuthor) {
+		super(myLogicalClock, Message.TYPE_ACK, ackAuthor, "complete later with setContent");
 		if (messageToAck.getMessageType() != Message.TYPE_MESSAGE) {
 			Engine.panic("Builder MessageAck incorrectly used");
 		}
 		byte[] contentAck = new byte[20];
 		this.logicalClockAuthor = messageToAck.getLogicalClock();
-		this.author = author;
+		this.authorOfAckedMessage = messageAuthor;
 		this.crc32 = ByteUtil.computeCRC32(ByteUtil.writeString(messageToAck.getContent()));
 		ByteUtil.writeInt32(contentAck, 0, this.logicalClockAuthor);
-		ByteUtil.writeInetSocketAddress(contentAck, 4, author);
+		ByteUtil.writeInetSocketAddress(contentAck, 4, messageAuthor);
 		ByteUtil.writeLong64(contentAck, 12, this.crc32);
 		this.setContent(ByteUtil.readString(contentAck));
 	}
@@ -56,7 +59,7 @@ public class AckMessage extends Message {
 	 *          : The message of type TYPE_ACK received.
 	 */
 	AckMessage(Message message) {
-		super(message.getLogicalClock(), Message.TYPE_ACK, message.getContent());
+		super(message.getLogicalClock(), Message.TYPE_ACK, message.getAuthor(), message.getContent());
 		if (message.getMessageType() != Message.TYPE_ACK) {
 			Engine.panic("Builder MessageAck incorrectly used");
 		}
@@ -66,7 +69,7 @@ public class AckMessage extends Message {
 		byte[] contentAck = ByteUtil.writeString(message.getContent());
 		this.logicalClockAuthor = ByteUtil.readInt32(contentAck, 0);
 		try {
-			this.author = ByteUtil.readInetSocketAddress(contentAck, 4);
+			this.authorOfAckedMessage = ByteUtil.readInetSocketAddress(contentAck, 4);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 			Engine.panic(e.getMessage());
@@ -79,8 +82,8 @@ public class AckMessage extends Message {
 		return logicalClockAuthor;
 	}
 
-	public InetSocketAddress getAuthor() {
-		return this.author;
+	public InetSocketAddress getAuthorOfAckedMessage() {
+		return this.authorOfAckedMessage;
 	}
 
 	public long getCrc32() {
@@ -89,7 +92,7 @@ public class AckMessage extends Message {
 
 	@Override
 	public String toString() {
-		return "ACK: LC: " + logicalClockAuthor + "; authorLC: " + logicalClockAuthor + "; Author: " + author
-		    + "; CRC: " + crc32;
+		return "ACK: LC: " + logicalClockAuthor + "; authorLC: " + logicalClockAuthor + "; Author: " + authorOfAckedMessage + "; CRC: "
+		    + crc32;
 	}
 }

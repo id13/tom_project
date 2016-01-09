@@ -29,8 +29,9 @@ public class TestWaitingMessage {
 		InetSocketAddress address3 = new InetSocketAddress("localhost", 12353);
 		InetSocketAddress address4 = new InetSocketAddress("localhost", 12354);
 		
+		// We send a Message and we receive ack from 1,2,3 and 4 in the good order.
 		MyPeer myPeer = new MyPeer(myAddress);
-		Message message = new Message(123, Message.TYPE_MESSAGE, "Hi, how are you?");
+		Message message = new Message(123, Message.TYPE_MESSAGE, myAddress, "Hi, how are you?");
 		WaitingMessage waitingMessage = new WaitingMessage(message, myPeer);
 		assertEquals("Hi, how are you?", waitingMessage.getContent());
 		assertEquals(123, waitingMessage.getLogicalClock());
@@ -38,12 +39,12 @@ public class TestWaitingMessage {
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address1);
 		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
-		AckMessage messageAck1 = new AckMessage(message, address1, 456);
+		AckMessage messageAck1 = new AckMessage(message, myAddress, 456, address1);
 		waitingMessage.addAck(address1, messageAck1);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
-		AckMessage messageAck2 = new AckMessage(message, address1, 321);
+		AckMessage messageAck2 = new AckMessage(message, myAddress, 321, address2);
 		waitingMessage.addAck(address2, messageAck2);
-		AckMessage messageAck3 = new AckMessage(message, address3, 400);
+		AckMessage messageAck3 = new AckMessage(message, myAddress, 400, address3);
 		waitingMessage.addAck(address3, messageAck3);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address2);
@@ -52,7 +53,7 @@ public class TestWaitingMessage {
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address4);
 		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
-		AckMessage messageAck4 = new AckMessage(message, address4, 450);
+		AckMessage messageAck4 = new AckMessage(message, myAddress, 450, address4);
 		waitingMessage.addAck(address4, messageAck4);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 	}
@@ -63,23 +64,22 @@ public class TestWaitingMessage {
 		InetSocketAddress address1 = new InetSocketAddress("localhost", 12351);
 		InetSocketAddress address2 = new InetSocketAddress("localhost", 12352);
 		InetSocketAddress address3 = new InetSocketAddress("localhost", 12353);
-		InetSocketAddress address4 = new InetSocketAddress("localhost", 12354);
 		
 		MyPeer myPeer = new MyPeer(myAddress);
 
-		Message message = new Message(12, Message.TYPE_MESSAGE, "Hi, how are you?");
+		Message message = new Message(12, Message.TYPE_MESSAGE, myAddress, "Hi, how are you?");
 		WaitingMessage waitingMessage = new WaitingMessage(message, address1);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address1);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
-		AckMessage messageAck2 = new AckMessage(message, address2, 321);
+		AckMessage messageAck2 = new AckMessage(message, address1, 321, address2);
 		waitingMessage.addAck(address2, messageAck2);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address2);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 		myPeer.addToGroup(address3);
 		assertFalse(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
-		AckMessage messageAck3 = new AckMessage(message, address3, 123);
+		AckMessage messageAck3 = new AckMessage(message, address1, 123, address3);
 		waitingMessage.addAck(address3, messageAck3);
 		assertTrue(waitingMessage.isReadyToDeliver(myPeer.getGroup()));
 	}

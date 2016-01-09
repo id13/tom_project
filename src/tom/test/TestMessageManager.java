@@ -39,9 +39,9 @@ public class TestMessageManager {
 
 		// On envoit un message "Message1" sur le canal 1,
 		// suivi des acks des canaux 2 et 3:
-		Message message1 = new Message(0, Message.TYPE_MESSAGE, "Message1");
-		AckMessage ack12 = new AckMessage(message1, address1, 1);
-		AckMessage ack13 = new AckMessage(message1, address1, 7);
+		Message message1 = new Message(0, Message.TYPE_MESSAGE, address1, "Message1");
+		AckMessage ack12 = new AckMessage(message1, address1, 1, address2);
+		AckMessage ack13 = new AckMessage(message1, address1, 7, address3);
 		messageManager.deliver(channel1, message1.getFullMessage());
 		messageManager.deliver(channel2, ack12.getFullMessage());
 		myPeer.setCorrectMessage("Message1");
@@ -51,9 +51,9 @@ public class TestMessageManager {
 
 		// On envoit Le ack2 du Message2, suivi du message2,
 		// suivi du ack du canal 3.
-		Message message2 = new Message(40, Message.TYPE_MESSAGE, "Message2");
-		AckMessage ack22 = new AckMessage(message2, address1, 42);
-		AckMessage ack23 = new AckMessage(message2, address1, 41);
+		Message message2 = new Message(40, Message.TYPE_MESSAGE, address1, "Message2");
+		AckMessage ack22 = new AckMessage(message2, address1, 42, address2);
+		AckMessage ack23 = new AckMessage(message2, address1, 41, address3);
 		messageManager.deliver(channel2, ack22.getFullMessage());
 		messageManager.deliver(channel1, message2.getFullMessage());
 		myPeer.setCorrectMessage("Message2");
@@ -63,9 +63,9 @@ public class TestMessageManager {
 
 		// On envoit Le ack2 du Message3, suivi du ack3 du message3,
 		// suivi du message3.
-		Message message3 = new Message(80, Message.TYPE_MESSAGE, "Message3");
-		AckMessage ack32 = new AckMessage(message3, address1, 83);
-		AckMessage ack33 = new AckMessage(message3, address1, 82);
+		Message message3 = new Message(80, Message.TYPE_MESSAGE, address1, "Message3");
+		AckMessage ack32 = new AckMessage(message3, address1, 83, address2);
+		AckMessage ack33 = new AckMessage(message3, address1, 82, address3);
 		messageManager.deliver(channel2, ack32.getFullMessage());
 		messageManager.deliver(channel3, ack33.getFullMessage());
 		myPeer.setCorrectMessage("Message3");

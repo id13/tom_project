@@ -20,11 +20,13 @@ public class TestAckMessage {
 
 	@Test
 	public void test() {
-		Message message1 = new Message(18, Message.TYPE_MESSAGE, "Hi, how are you?");
-		InetSocketAddress inetSocketAddress = new InetSocketAddress("localhost", 45678);
-		AckMessage messageAck = new AckMessage(message1, inetSocketAddress, 789);
+  	InetSocketAddress distAddress = new InetSocketAddress("localhost", 54321);
+  	InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
+		Message message1 = new Message(18, Message.TYPE_MESSAGE, distAddress, "Hi, how are you?");
+		AckMessage messageAck = new AckMessage(message1, distAddress, 789, myAddress);
 		assertEquals(ByteUtil.computeCRC32(ByteUtil.writeString("Hi, how are you?")), messageAck.getCrc32());
-		assertEquals(inetSocketAddress, messageAck.getAuthor());
+		assertEquals(distAddress, messageAck.getAuthorOfAckedMessage());
+		assertEquals(myAddress, messageAck.getAuthor());
 		assertEquals(18, messageAck.getLogicalClockAuthor());
 		assertEquals(789, messageAck.getLogicalClock());
 		assertEquals(Message.TYPE_ACK, messageAck.getMessageType());
@@ -36,6 +38,7 @@ public class TestAckMessage {
 		AckMessage messageAck3 = (AckMessage) messageAck2;
 		assertEquals(messageAck.getCrc32(), messageAck3.getCrc32());
 		assertEquals(messageAck.getAuthor(), messageAck3.getAuthor());
+		assertEquals(messageAck.getAuthorOfAckedMessage(), messageAck3.getAuthorOfAckedMessage());
 		assertEquals(messageAck.getLogicalClockAuthor(), messageAck3.getLogicalClockAuthor());
 	}
 }
