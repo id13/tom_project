@@ -4,15 +4,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import messages.engine.Channel;
+import messages.engine.ConnectCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.nio.NioEngine;
 
-public class PeerImpl implements Peer {
+public class PeerImpl implements Peer, ConnectCallback {
 
   private final int port;
   private final Messenger messenger;
-  private final MessageManager messagesStock;
+  private final MessageManager messageManager;
   private int logicalClock = 0;
   private Set<Channel> channels;
 
@@ -27,9 +28,10 @@ public class PeerImpl implements Peer {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    this.messagesStock = new MessageManager(this, callback);
+    this.messageManager = new MessageManager(this, callback);
     this.messenger = new Messenger(engine, port);
-    this.messenger.setDeliverCallback(messagesStock);
+    this.messenger.setDeliverCallback(messageManager);
+    this.messenger.setConnectCallback(this);
     try {
       messenger.accept();
     } catch (Exception ex) {
@@ -42,7 +44,7 @@ public class PeerImpl implements Peer {
   public void send(String content) {
     logicalClock++; 
     Message message = new Message(logicalClock, Message.TYPE_MESSAGE, content);
-    messagesStock.treatMyMessage(message);
+    messageManager.treatMyMessage(message);
     messenger.broadcast(message.getFullMessage());
   }
 
@@ -59,5 +61,29 @@ public class PeerImpl implements Peer {
 	@Override
 	public void connect(int port) {
 		messenger.connect("localhost", port);
+	}
+
+	@Override
+	public int updateLogicalClock(int outsideLogicalClock) {
+		if (outsideLogicalClock < this.logicalClock) {
+			this.logicalClock++;
+			return this.logicalClock;
+		} else {
+			this.logicalClock = outsideLogicalClock + 1;
+			return this.logicalClock;
+		}
+	}
+
+	@Override
+	public void closed(Channel channel) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void connected(Channel channel) {
+		channels.add(channel);
+		// TODO: later, we will add to channels only the new peers of the group
+		// But there, we assume that the group is created before to use it.
 	}
 }

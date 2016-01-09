@@ -20,6 +20,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   private Map<Server, Channel> channels = new HashMap<Server, Channel>();
   private Server acceptServer;
   private DeliverCallback deliverCallback;
+  private ConnectCallback connectCallback;
   
   public Messenger(Engine engine, int port) {
     super();
@@ -39,6 +40,9 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   @Override
   public void connected(Channel channel) {
     this.channels.put(channel.getServer(), channel);
+    if (this.connectCallback != null) {
+    	this.connectCallback.connected(channel);
+    }
   }
 
   @Override
@@ -137,5 +141,9 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     Thread broadcastThread = new Thread(broadcast, "broadcastThread");
     broadcastThread.start();
   }
+
+	public void setConnectCallback(ConnectCallback connectCallback) {
+		this.connectCallback = connectCallback;
+	}
   
 }

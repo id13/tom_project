@@ -13,4 +13,6 @@ public interface Peer {
 	public Set<Channel> getChannelGroup();
 	
 	public int getPort();
+	
+	int updateLogicalClock(int outsideLogicalClock);
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 import messages.engine.Channel;
 import messages.engine.DeliverCallback;
 import messages.engine.Engine;
+import messages.util.ByteUtil;
 
 public class MessageManager implements DeliverCallback {
 
@@ -34,6 +35,9 @@ public class MessageManager implements DeliverCallback {
 	}
 
 	private void treatMessage(Message message, Channel channel) {
+		int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
+		AckMessage ourAck = new AckMessage(message, channel, logicalClock);
+		peer.send(ByteUtil.readString(ourAck.getFullMessage()));
 		WaitingMessage waitingMessage = new WaitingMessage(message, channel);
 		// We will perhaps remove elements from the Set so we have to use an
 		// Iterator like that:
@@ -51,6 +55,7 @@ public class MessageManager implements DeliverCallback {
 	}
 
 	private void treatAck(AckMessage ack, Channel channel) {
+		peer.updateLogicalClock(ack.getLogicalClock());
 		boolean foundInQueue = false;
 		for (WaitingMessage waitingMessage : waitingMessages) {
 			if (waitingMessage.getLogicalClock() == ack.getLogicalClockAuthor()

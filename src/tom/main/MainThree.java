@@ -15,14 +15,14 @@ public class MainThree {
 
 			@Override
 			public void run() {
-				while (!Thread.interrupted()) {
+//				while (!Thread.interrupted()) {
 					try {
 						Thread.sleep(1000);
 						peer3.send("Bonjour");
 					} catch (InterruptedException e) {
 						System.out.println("Interrupted");
 					}
-				}
+//				}
 			}
 		};
 		Thread t = new Thread(runnable);
