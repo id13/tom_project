@@ -102,7 +102,7 @@ public class Message {
 
 	@Override
 	public String toString() {
-		return "Message: LC: " + logicalClock + "; Type: " + messageType + "; content: " + content;
+		return "Message: LC: " + logicalClock + "; Author: " + author + "; Type: " + messageType + "; content: " + content;
 	}
 
 	public InetSocketAddress getAuthor() {

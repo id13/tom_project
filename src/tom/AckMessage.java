@@ -92,7 +92,7 @@ public class AckMessage extends Message {
 
 	@Override
 	public String toString() {
-		return "ACK: LC: " + logicalClockAuthor + "; authorLC: " + logicalClockAuthor + "; Author: " + authorOfAckedMessage + "; CRC: "
-		    + crc32;
+		return "ACK: LC: " + getLogicalClock() + "; AuthorOfThisMEssage: " + getAuthor() + "; authorLC: "
+		    + logicalClockAuthor + "; AuthorOfAckedMessage: " + authorOfAckedMessage + "; CRC: " + crc32;
 	}
 }
