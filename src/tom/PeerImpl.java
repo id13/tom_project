@@ -56,7 +56,7 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 	@Override
 	public void send(String content) {
 		logicalClock++;
-		Message message = new Message(logicalClock, Message.TYPE_MESSAGE, myAddress, content);
+		Message message = new Message(logicalClock, Message.MESSAGE, myAddress, content);
 		messageManager.treatMyMessage(message);
 		messenger.broadcast(message.getFullMessage());
 	}
@@ -79,15 +79,13 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 
 	@Override
 	public void closed(Channel channel) {
-		// TODO Auto-generated method stub
+		this.distantPeerManager.removeChannel(channel);
 
 	}
 
 	@Override
 	public void connected(Channel channel) {
 		distantPeerManager.addChannel(channel);
-		// TODO: later, we will add to channels only the new peers of the group
-		// But there, we assume that the group is created before to use it.
 	}
 
 	@Override

@@ -45,5 +45,8 @@ public class DistantPeerManager {
 	public void addChannel(Channel channel) {
 		this.group.add(channel);
 	}
-
+	
+	public void removeChannel(Channel channel) {
+	  this.group.remove(channel);
+	}
 }

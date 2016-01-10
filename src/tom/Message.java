@@ -8,9 +8,9 @@ import messages.util.ByteUtil;
 
 public class Message {
 
-	public static final byte TYPE_MESSAGE = (byte) 1;
-	public static final byte TYPE_ACK = (byte) 2;
-	public static final byte TYPE_JOIN = (byte) 3;
+	public static final byte MESSAGE = (byte) 1;
+	public static final byte ACK = (byte) 2;
+	public static final byte JOIN = (byte) 3;
 
 	private int logicalClock;
 	private byte messageType;
@@ -52,7 +52,7 @@ public class Message {
 		}
 		String content = ByteUtil.readString(bytes).substring(13);
 		Message message = new Message(logicalClock, messageType, author, content);
-		if (messageType == TYPE_ACK) {
+		if (messageType == ACK) {
 			AckMessage messageAck = new AckMessage(message);
 			return messageAck;
 		} else {

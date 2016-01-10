@@ -36,8 +36,8 @@ public class AckMessage extends Message {
 	 */
 	public AckMessage(Message messageToAck, InetSocketAddress messageAuthor, int myLogicalClock,
 	    InetSocketAddress ackAuthor) {
-		super(myLogicalClock, Message.TYPE_ACK, ackAuthor, "complete later with setContent");
-		if (messageToAck.getMessageType() != Message.TYPE_MESSAGE) {
+		super(myLogicalClock, Message.ACK, ackAuthor, "complete later with setContent");
+		if (messageToAck.getMessageType() != Message.MESSAGE) {
 			Engine.panic("Builder MessageAck incorrectly used");
 		}
 		byte[] contentAck = new byte[20];
@@ -59,8 +59,8 @@ public class AckMessage extends Message {
 	 *          : The message of type TYPE_ACK received.
 	 */
 	AckMessage(Message message) {
-		super(message.getLogicalClock(), Message.TYPE_ACK, message.getAuthor(), message.getContent());
-		if (message.getMessageType() != Message.TYPE_ACK) {
+		super(message.getLogicalClock(), Message.ACK, message.getAuthor(), message.getContent());
+		if (message.getMessageType() != Message.ACK) {
 			Engine.panic("Builder MessageAck incorrectly used");
 		}
 		if (message.getContent().length() != 20) {

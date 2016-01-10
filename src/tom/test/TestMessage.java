@@ -14,9 +14,9 @@ public class TestMessage {
   @Test
   public void test() {
   	InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
-    Message message1 = new Message(42, Message.TYPE_MESSAGE, myAddress, "Hi, how are you?");
+    Message message1 = new Message(42, Message.MESSAGE, myAddress, "Hi, how are you?");
     assertEquals(42, message1.getLogicalClock());
-    assertEquals(Message.TYPE_MESSAGE, message1.getMessageType());
+    assertEquals(Message.MESSAGE, message1.getMessageType());
     assertTrue(myAddress.equals(message1.getAuthor()));
     assertTrue(new String("Hi, how are you?").equals(message1.getContent()));
     
@@ -35,7 +35,7 @@ public class TestMessage {
     bytes[5] = -127;
     bytes[6] = -100;
     String gloomyMessage = ByteUtil.readString(bytes);
-    Message message3 = new Message(123456, Message.TYPE_MESSAGE, myAddress, gloomyMessage);
+    Message message3 = new Message(123456, Message.MESSAGE, myAddress, gloomyMessage);
     Message message4 = Message.getMessageReceived(message3.getFullMessage());
     assertEquals(message3.getLogicalClock(), message4.getLogicalClock());
     assertEquals(message3.getMessageType(), message4.getMessageType());

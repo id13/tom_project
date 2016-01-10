@@ -49,9 +49,9 @@ public class MessageManager implements DeliverCallback {
 		distantPeerManager.addId(channel, address);
 		System.out.println("Received message (not delivered) from " + address + " : " + message);
 
-		if (message.getMessageType() == Message.TYPE_MESSAGE) {
+		if (message.getMessageType() == Message.MESSAGE) {
 			treatMessage(message, address);
-		} else if (message.getMessageType() == Message.TYPE_ACK) {
+		} else if (message.getMessageType() == Message.ACK) {
 			treatAck((AckMessage) message, address);
 		} else {
 			Engine.panic("Unknown message type");

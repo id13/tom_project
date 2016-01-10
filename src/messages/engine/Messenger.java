@@ -22,6 +22,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   private DeliverCallback deliverCallback;
   private ConnectCallback connectCallback;
 	private AcceptCallback acceptCallback;
+  private ClosableCallback closableCallback;
   
   public Messenger(Engine engine, int port) {
     super();
@@ -64,6 +65,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       Engine.panic(e.getMessage());
     }
     this.channels.remove(channel);
+    this.closableCallback.closed(channel);
   }
   
   public synchronized void broadcast(byte[] bytes) {
@@ -147,9 +149,16 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
 	public void setConnectCallback(ConnectCallback connectCallback) {
 		this.connectCallback = connectCallback;
+		this.setClosedCallback(connectCallback);
 	}
 
 	public void setAcceptCallback(AcceptCallback acceptCallback) {
 		this.acceptCallback = acceptCallback;
+		this.setClosedCallback(acceptCallback);
 	}
+	
+	public void setClosedCallback(ClosableCallback callback) {
+	  this.closableCallback = callback;
+	}
+	
 }

@@ -32,7 +32,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	 *          the InetSocketAddress from which this message has been received.
 	 */
 	public WaitingMessage(Message message, InetSocketAddress author) {
-		if (message.getMessageType() == Message.TYPE_MESSAGE) {
+		if (message.getMessageType() == Message.MESSAGE) {
 			this.content = message.getContent();
 			this.logicalClock = message.getLogicalClock();
 			this.author = author;
@@ -51,7 +51,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	 *          The peer sending the message.
 	 */
 	public WaitingMessage(Message message, Peer peer) {
-		if (message.getMessageType() == Message.TYPE_MESSAGE) {
+		if (message.getMessageType() == Message.MESSAGE) {
 			this.content = message.getContent();
 			this.logicalClock = message.getLogicalClock();
 			this.author = peer.getMyAddress();

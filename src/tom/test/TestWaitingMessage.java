@@ -35,7 +35,7 @@ public class TestWaitingMessage {
 		// We send a Message and we receive ack from 1,2,3 and 4 in the good order.
 		MyPeer myPeer = new MyPeer(myAddress);
 		DistantPeerManager manager = myPeer.getDistantPeerManager();
-		Message message = new Message(123, Message.TYPE_MESSAGE, myAddress, "Hi, how are you?");
+		Message message = new Message(123, Message.MESSAGE, myAddress, "Hi, how are you?");
 		WaitingMessage waitingMessage = new WaitingMessage(message, myPeer);
 		assertEquals("Hi, how are you?", waitingMessage.getContent());
 		assertEquals(123, waitingMessage.getLogicalClock());
@@ -82,7 +82,7 @@ public class TestWaitingMessage {
 		manager.addId(channel2, address2);
 		manager.addId(channel3, address3);
 
-		Message message = new Message(12, Message.TYPE_MESSAGE, myAddress, "Hi, how are you?");
+		Message message = new Message(12, Message.MESSAGE, myAddress, "Hi, how are you?");
 		WaitingMessage waitingMessage = new WaitingMessage(message, address1);
 		assertTrue(manager.allAckReceived(waitingMessage));
 		manager.addChannel(channel1);
