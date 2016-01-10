@@ -117,6 +117,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Runnable burstLoop = new Runnable() {
       @Override
       public void run() {
+      	int cpt = 0;
         for(;;) {
           try {
             Thread.currentThread().sleep(100);
@@ -125,7 +126,8 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
             Thread.currentThread().interrupt();
             Engine.panic(e.getMessage());
           }
-          manager.sendMessagerOrder("hello");
+          manager.sendMessagerOrder("hello(" + cpt + ")");
+          cpt++;
         }
       }
     };

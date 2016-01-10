@@ -45,13 +45,13 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   @Override
   public void deliver(Channel channel, byte[] bytes) {
-    peer.send(new String(bytes));
+    peer.send(new String(bytes) + "(" + peer.getMyAddress().getPort() + ")");
   }
 
   @Override
   public void deliver(InetSocketAddress from, String message) {
 
-    messenger.broadcast((message + " from " + from.toString()).getBytes());
+    messenger.broadcast((message + " from " + from.getPort()).getBytes());
   }
 
   @Override
