@@ -1,7 +1,9 @@
 package tom;
 
+import java.net.InetSocketAddress;
+
 public interface TomDeliverCallback {
 
-	public void deliver(String message);
+	public void deliver(InetSocketAddress from, String message);
 
 }

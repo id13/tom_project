@@ -92,7 +92,7 @@ public class TestMessageManager {
 		}
 
 		@Override
-		public void deliver(String message) {
+		public void deliver(InetSocketAddress from, String message) {
 			if (!message.equals(correctMessage)) {
 				fail("Wrong message received, or not at the good time.\n" + "CorrectMessage: " + correctMessage
 				    + "DeliveredMessage: " + message);

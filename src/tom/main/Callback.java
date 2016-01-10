@@ -1,5 +1,7 @@
 package tom.main;
 
+import java.net.InetSocketAddress;
+
 import tom.TomDeliverCallback;
 
 public class Callback implements TomDeliverCallback {
@@ -11,8 +13,8 @@ public class Callback implements TomDeliverCallback {
 	}
 
 	@Override
-	public void deliver(String message) {
-		System.out.println("Delivered by TOM layer: " + message);
+	public void deliver(InetSocketAddress from, String message) {
+		System.out.println("Delivered by TOM layer from " + from.toString() + " : " + message);
 
 	}
 }

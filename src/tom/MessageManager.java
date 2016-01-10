@@ -14,7 +14,7 @@ import messages.engine.Messenger;
 
 /**
  * This class is used to manage the messages in order to wait ACKs before to
- * deliver. This class uses a Queue to sort the messages (of type TYPE_MESSAGE)
+ * deliver. This class uses a Queue to sort the messages (of type MESSAGE)
  * received with their ACKs. It uses a Set to store the ACKs received before the
  * messages there are acknowledging.
  *
@@ -129,7 +129,7 @@ public class MessageManager implements DeliverCallback {
 		WaitingMessage waitingMessage = waitingMessages.peek();
 		while (waitingMessage != null && distantPeerManager.allAckReceived(waitingMessage)) {
 			waitingMessages.remove();
-			tomDeliverCallback.deliver(waitingMessage.getContent());
+			tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent());
 			waitingMessage = waitingMessages.peek();
 		}
 	}
