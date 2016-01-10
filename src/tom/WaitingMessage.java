@@ -61,8 +61,8 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	}
 
 	/**
-	 * This method treat an ACK by verifying it and adding the address to the
-	 * set containing address having acknowledged the message.
+	 * This method treat an ACK by verifying it and adding the address to the set
+	 * containing address having acknowledged the message.
 	 * 
 	 * @param address:
 	 *          The address from which the ACK has been sent.
@@ -110,7 +110,15 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 		} else if (this.logicalClock > o.logicalClock) {
 			return 1;
 		} else {
-			return this.author.toString().compareTo(o.author.toString());
+			if (this.author.getPort() != o.author.getPort()) {
+				Integer int1 = this.author.getPort();
+				Integer int2 = o.author.getPort();
+				return int1.compareTo(int2);
+			} else {
+				String ip1 = ByteUtil.readString(this.author.getAddress().getAddress());
+				String ip2 = ByteUtil.readString(o.author.getAddress().getAddress());
+				return ip1.compareTo(ip2);
+			}
 		}
 	}
 
@@ -121,5 +129,5 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	public Set<InetSocketAddress> getReceivedAck() {
 		return receivedAck;
 	}
-	
+
 }
