@@ -33,13 +33,6 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 		this.myAddress = myAddress;
 		this.distantPeerManager = new DistantPeerManager();
 		NioEngine engine = NioEngine.getNioEngine();
-		Runnable engineLoop = new Runnable() {
-			public void run() {
-				engine.mainloop();
-			}
-		};
-		Thread engineThread = new Thread(engineLoop, "engineThread");
-		engineThread.start();
 		this.messenger = new Messenger(engine, myAddress.getPort());
 		this.messageManager = new MessageManager(this, callback, messenger, distantPeerManager);
 		this.messenger.setDeliverCallback(messageManager);

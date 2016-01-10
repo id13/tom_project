@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import messages.engine.nio.NioEngine;
 import tom.Peer;
 import tom.PeerImpl;
 
@@ -15,6 +16,14 @@ public class MainThree {
 		Callback callback3 = new Callback("peer3");
 		InetAddress myIpAddress = Inet4Address.getLocalHost();
 		InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12382);
+    NioEngine engine = NioEngine.getNioEngine();
+    Runnable engineLoop = new Runnable() {
+      public void run() {
+        engine.mainloop();
+      }
+    };
+    Thread engineThread = new Thread(engineLoop, "engineThread");
+    engineThread.start();
 		Peer peer3 = new PeerImpl(myAddress, callback3);
 		peer3.connect(new InetSocketAddress("localhost", 12380));
 		peer3.connect(new InetSocketAddress("localhost", 12381));
