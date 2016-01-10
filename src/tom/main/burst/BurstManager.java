@@ -32,17 +32,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   
   public BurstManager(int port) {
     this.port = port;
-    this.messagesToChek = new HashMap<InetSocketAddress , LinkedList<String> >() {
-      private static final long serialVersionUID = 1L;
-
-      @Override
-      public LinkedList<String> get(Object key){
-        LinkedList<String> result = super.get(key);
-        if(result == null)
-          result = new LinkedList<String>();
-        return result;        
-      }
-    };
+    this.messagesToChek = new HashMap<InetSocketAddress , LinkedList<String> >();
   }
   
   public void createMessenger(Set<InetSocketAddress> slavesToConnect) {
@@ -54,6 +44,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     messenger.accept();
     for(InetSocketAddress slaveToConnect : this.slavesToConnect) {
       this.messenger.connect("localhost", slaveToConnect.getPort());
+      this.messagesToChek.put(new InetSocketAddress("localhost", slaveToConnect.getPort()), new LinkedList<String>());
     }
   }
   
@@ -128,7 +119,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       public void run() {
         for(;;) {
           try {
-            Thread.currentThread().sleep(500);
+            Thread.currentThread().sleep(100);
           } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();

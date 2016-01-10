@@ -50,13 +50,12 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   @Override
   public void deliver(InetSocketAddress from, String message) {
-    messenger.broadcast(message.getBytes());
+
+    messenger.broadcast((message + " from " + from.toString()).getBytes());
   }
 
   @Override
   public void connected(Channel channel) {
-    // XXX Auto-generated method stub
-    
   }
   
 }

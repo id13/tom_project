@@ -129,6 +129,7 @@ public class MessageManager implements DeliverCallback {
 		WaitingMessage waitingMessage = waitingMessages.peek();
 		while (waitingMessage != null && distantPeerManager.allAckReceived(waitingMessage)) {
 			waitingMessages.remove();
+			System.out.println("delivered " + waitingMessage.getContent() + " from " + waitingMessage.getAuthor().toString());
 			tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent());
 			waitingMessage = waitingMessages.peek();
 		}
