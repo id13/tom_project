@@ -120,13 +120,15 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       	int cpt = 0;
         for(;;) {
           try {
-            Thread.currentThread().sleep(100);
+            // On my computer, this is the limit value, bellow that, the tom 
+            // layer begins to fall apart
+            Thread.currentThread().sleep(60);
           } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
             Engine.panic(e.getMessage());
           }
-          manager.sendMessagerOrder("hello(" + cpt + ")");
+          manager.sendMessagerOrder("hello number " + cpt );
           cpt++;
         }
       }
