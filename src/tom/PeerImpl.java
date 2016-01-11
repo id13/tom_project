@@ -48,8 +48,8 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 
 	@Override
 	public void send(String content) {
-		logicalClock++;
-		Message message = new Message(logicalClock, Message.MESSAGE, myAddress, content);
+		int lc = updateLogicalClock(0);
+		Message message = new Message(lc, Message.MESSAGE, myAddress, content);
 		messageManager.treatMyMessage(message);
 		messenger.broadcast(message.getFullMessage());
 	}
@@ -60,7 +60,7 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 	}
 
 	@Override
-	public int updateLogicalClock(int outsideLogicalClock) {
+	public synchronized int updateLogicalClock(int outsideLogicalClock) {
 		if (outsideLogicalClock < this.logicalClock) {
 			this.logicalClock++;
 			return this.logicalClock;
