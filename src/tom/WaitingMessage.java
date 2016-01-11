@@ -19,6 +19,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 
 	private InetSocketAddress author;
 	private String content;
+	private long crc;
 	private int logicalClock;
 	private Set<InetSocketAddress> receivedAck = new HashSet<>();
 
@@ -36,6 +37,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 			this.content = message.getContent();
 			this.logicalClock = message.getLogicalClock();
 			this.author = author;
+			this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
 		} else {
 			Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
 		}
@@ -55,14 +57,15 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 			this.content = message.getContent();
 			this.logicalClock = message.getLogicalClock();
 			this.author = peer.getMyAddress();
+			this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
 		} else {
 			Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
 		}
 	}
 
 	/**
-	 * Build a waiting message from an ACK of a message which has not been received
-	 * yet.
+	 * Build a waiting message from an ACK of a message which has not been
+	 * received yet.
 	 * 
 	 * @param ack
 	 * @param address
@@ -72,6 +75,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 		this.author = ack.getAuthorOfAckedMessage();
 		this.logicalClock = ack.getLogicalClockAuthor();
 		this.receivedAck.add(address);
+		this.crc = ack.getCrc32();
 	}
 
 	/**
@@ -84,10 +88,8 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	 *          The ACK received.
 	 */
 	public void addAck(InetSocketAddress address, AckMessage ackMessage) {
-		if (ackMessage.getCrc32() != ByteUtil.computeCRC32(ByteUtil.writeString(content))
-		    || ackMessage.getLogicalClock() <= this.logicalClock) {
-			Engine
-			    .panic("The ack doesn't correspond to the acked message" + " or there is a problem with the logical clock.");
+		if (ackMessage.getCrc32() != crc || ackMessage.getLogicalClock() <= this.logicalClock) {
+			Engine.panic("The ack doesn't correspond to the acked message or there is a problem with the logical clock.");
 		}
 		if (receivedAck.contains(address)) {
 			Engine.panic("This ack has already been received");
@@ -107,7 +109,9 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	public void addMessage(InetSocketAddress address, Message message) {
 		if (content != null || logicalClock != message.getLogicalClock() || !author.equals(address)) {
 			Engine.panic("The message doesn't correspond to the waiting message");
-
+		}
+		if (ByteUtil.computeCRC32(ByteUtil.writeString(message.getContent())) != crc) {
+			Engine.panic("wrong CRC.");
 		}
 		this.content = message.getContent();
 		this.receivedAck.add(address);
