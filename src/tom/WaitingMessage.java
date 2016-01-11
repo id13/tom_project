@@ -61,6 +61,20 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 	}
 
 	/**
+	 * Build a waiting message from an ACK of a message which has not been received
+	 * yet.
+	 * 
+	 * @param ack
+	 * @param address
+	 *          The author of the ACK.
+	 */
+	public WaitingMessage(AckMessage ack, InetSocketAddress address) {
+		this.author = ack.getAuthorOfAckedMessage();
+		this.logicalClock = ack.getLogicalClockAuthor();
+		this.receivedAck.add(address);
+	}
+
+	/**
 	 * This method treat an ACK by verifying it and adding the address to the set
 	 * containing address having acknowledged the message.
 	 * 
@@ -79,6 +93,24 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
 			Engine.panic("This ack has already been received");
 		}
 		receivedAck.add(address);
+	}
+
+	/**
+	 * Add the message to the waiting message. This method assumes that the
+	 * waiting message correspond to the message. That means that the received ACK
+	 * must have acknowledged this message. This method adds the content and adds
+	 * the address to the set of ACK.
+	 * 
+	 * @param address
+	 * @param message
+	 */
+	public void addMessage(InetSocketAddress address, Message message) {
+		if (content != null || logicalClock != message.getLogicalClock() || !author.equals(address)) {
+			Engine.panic("The message doesn't correspond to the waiting message");
+
+		}
+		this.content = message.getContent();
+		this.receivedAck.add(address);
 	}
 
 	public String getContent() {

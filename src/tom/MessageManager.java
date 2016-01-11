@@ -1,11 +1,7 @@
 package tom;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 import messages.engine.Channel;
 import messages.engine.DeliverCallback;
@@ -21,7 +17,6 @@ import messages.engine.Messenger;
  */
 public class MessageManager implements DeliverCallback {
 
-	private Set<EarlyAck> earlyAcks = new HashSet<>();
 	private PriorityQueue<WaitingMessage> waitingMessages = new PriorityQueue<>();
 	private final Peer peer;
 	private final TomDeliverCallback tomDeliverCallback;
@@ -76,19 +71,17 @@ public class MessageManager implements DeliverCallback {
 		if (messenger != null) { // Useful in JUnitTest
 			messenger.broadcast(ourAck.getFullMessage());
 		}
-		WaitingMessage waitingMessage = new WaitingMessage(message, address);
-		// We will perhaps remove elements from the Set so we have to use an
-		// Iterator like that:
-		for (Iterator<EarlyAck> it = earlyAcks.iterator(); it.hasNext();) {
-			EarlyAck earlyAck = it.next();
-			AckMessage ack = earlyAck.getAck();
-			if (ack.getLogicalClockAuthor() == message.getLogicalClock() && ack.getAuthorOfAckedMessage().equals(address)) {
-				waitingMessage.addAck(earlyAck.getAddress(), ack);
-				it.remove();
+		for (WaitingMessage waitingMessage : waitingMessages) {
+			if (waitingMessage.getLogicalClock() == message.getLogicalClock()
+			    && waitingMessage.getAuthor().equals(address)) {
+				waitingMessage.addMessage(address, message);
+				deliverHeadIfNeeded();
+				return;
 			}
-		}
+		}		
+		WaitingMessage waitingMessage = new WaitingMessage(message, address);
 		waitingMessages.add(waitingMessage);
-		deliverHeadIfNeeded();
+		deliverHeadIfNeeded(); // Useful for a group of 2 peers.
 	}
 
 	/**
@@ -115,7 +108,8 @@ public class MessageManager implements DeliverCallback {
 			}
 		}
 		if (!foundInQueue) {
-			earlyAcks.add(new EarlyAck(ack, address));
+			WaitingMessage waitingMessage = new WaitingMessage(ack, ack.getAuthor());
+			waitingMessages.add(waitingMessage);
 		}
 	}
 
@@ -148,28 +142,5 @@ public class MessageManager implements DeliverCallback {
 		waitingMessages.add(waitingMessage);
 		// Only for the situation where the group size is 1:
 		deliverHeadIfNeeded();
-	}
-
-	/**
-	 * This class is used in MessageManager to represent a ACK received before the
-	 * messages that it acknowledges.
-	 *
-	 */
-	private class EarlyAck {
-		AckMessage ack;
-		InetSocketAddress address;
-
-		public EarlyAck(AckMessage ack, InetSocketAddress address) {
-			this.ack = ack;
-			this.address = address;
-		}
-
-		public AckMessage getAck() {
-			return ack;
-		}
-
-		public InetSocketAddress getAddress() {
-			return address;
-		}
 	}
 }
