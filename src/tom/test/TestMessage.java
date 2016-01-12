@@ -13,19 +13,19 @@ public class TestMessage {
 
   @Test
   public void test() {
-  	InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
+    InetSocketAddress myAddress = new InetSocketAddress("localhost", 12345);
     Message message1 = new Message(42, Message.MESSAGE, myAddress, "Hi, how are you?");
     assertEquals(42, message1.getLogicalClock());
     assertEquals(Message.MESSAGE, message1.getMessageType());
     assertTrue(myAddress.equals(message1.getAuthor()));
     assertTrue(new String("Hi, how are you?").equals(message1.getContent()));
-    
+
     Message message2 = Message.getMessageReceived(message1.getFullMessage());
     assertEquals(message1.getLogicalClock(), message2.getLogicalClock());
     assertEquals(message1.getMessageType(), message2.getMessageType());
     assertTrue(message2.getAuthor().equals(message1.getAuthor()));
     assertTrue(message1.getContent().equals(message2.getContent()));
-    
+
     byte[] bytes = new byte[7];
     bytes[0] = 0;
     bytes[1] = 42;
@@ -40,7 +40,7 @@ public class TestMessage {
     assertEquals(message3.getLogicalClock(), message4.getLogicalClock());
     assertEquals(message3.getMessageType(), message4.getMessageType());
     assertTrue(message3.getAuthor().equals(message4.getAuthor()));
-    assertTrue(message3.getContent().equals(message4.getContent()));    
+    assertTrue(message3.getContent().equals(message4.getContent()));
   }
 
 }

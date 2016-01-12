@@ -11,7 +11,7 @@ public class NioServer extends Server {
   private int port;
   private SelectionKey key;
   private NetworkChannel channel;
-  
+
   public NioServer(int port, NetworkChannel channel, SelectionKey key) {
     this.port = port;
     this.key = key;
@@ -21,7 +21,7 @@ public class NioServer extends Server {
   public SelectionKey getSelectionKey() {
     return this.key;
   }
-  
+
   @Override
   public int getPort() {
     return this.port;

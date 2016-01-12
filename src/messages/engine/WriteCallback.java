@@ -6,8 +6,9 @@ public interface WriteCallback {
 
   /**
    * Handles the writing into an input such as a channel
-   * @throws IOException 
+   * 
+   * @throws IOException
    */
   public abstract void handleWrite() throws IOException;
-  
+
 }

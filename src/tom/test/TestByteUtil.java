@@ -19,8 +19,7 @@ public class TestByteUtil {
 
     ByteUtil.writeLong64(bytes, 0, -456789L);
     assertEquals(-456789L, ByteUtil.readLong64(bytes, 0));
-    
-    
+
     byte[] bytes1 = new byte[7];
     bytes1[0] = 0;
     bytes1[1] = 42;
@@ -31,16 +30,16 @@ public class TestByteUtil {
     bytes1[6] = -100;
     String gloomyMessage = ByteUtil.readString(bytes1);
     byte[] bytes2 = ByteUtil.writeString(gloomyMessage);
-    assertEquals(0,bytes2[0]);
-    assertEquals(42,bytes2[1]);
-    assertEquals(-42,bytes2[2]);
-    assertEquals(127,bytes2[3]);
-    assertEquals(-128,bytes2[4]);
-    assertEquals(-127,bytes2[5]);
-    assertEquals(-100,bytes2[6]);
+    assertEquals(0, bytes2[0]);
+    assertEquals(42, bytes2[1]);
+    assertEquals(-42, bytes2[2]);
+    assertEquals(127, bytes2[3]);
+    assertEquals(-128, bytes2[4]);
+    assertEquals(-127, bytes2[5]);
+    assertEquals(-100, bytes2[6]);
 
     byte[] bytes3 = new byte[256];
-    for (int i=0; i<256; i++) {
+    for (int i = 0; i < 256; i++) {
       bytes3[i] = (byte) i;
     }
     String string = ByteUtil.readString(bytes3);

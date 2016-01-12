@@ -21,19 +21,19 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   private Server acceptServer;
   private DeliverCallback deliverCallback;
   private ConnectCallback connectCallback;
-	private AcceptCallback acceptCallback;
+  private AcceptCallback acceptCallback;
   private ClosableCallback closableCallback;
-  
+
   public Messenger(Engine engine, int port) {
     super();
     this.port = port;
     this.engine = engine;
   }
-  
+
   public void setDeliverCallback(DeliverCallback callback) {
     this.deliverCallback = callback;
   }
-  
+
   @Override
   public synchronized void deliver(Channel channel, byte[] bytes) {
     this.deliverCallback.deliver(channel, bytes);
@@ -43,7 +43,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
   public void connected(Channel channel) {
     this.channels.add(channel);
     if (this.connectCallback != null) {
-    	this.connectCallback.connected(channel);
+      this.connectCallback.connected(channel);
     }
   }
 
@@ -52,7 +52,7 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     channel.setServer(server);
     this.channels.add(channel);
     if (this.acceptCallback != null) {
-    	this.acceptCallback.accepted(server, channel);
+      this.acceptCallback.accepted(server, channel);
     }
   }
 
@@ -67,9 +67,9 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     this.channels.remove(channel);
     this.closableCallback.closed(channel);
   }
-  
+
   public synchronized void broadcast(byte[] bytes) {
-    for(Channel channel : channels) {
+    for (Channel channel : channels) {
       try {
         channel.send(bytes, 0, bytes.length);
       } catch (IOException e) {
@@ -78,18 +78,18 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       }
     }
   }
-  
+
   public void connect(String hostname, int port) {
     InetAddress address;
     try {
-      address = InetAddress.getByName (hostname);
+      address = InetAddress.getByName(hostname);
       this.engine.connect(address, port, this);
     } catch (SecurityException | IOException e) {
       e.printStackTrace();
       Engine.panic(e.getMessage());
     }
   }
-  
+
   public void stopAccept() {
     try {
       this.acceptServer.close();
@@ -98,15 +98,14 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       Engine.panic(e.getMessage());
     }
   }
-  
 
   public void closeAllConnections() {
     this.stopAccept();
-    for(Channel channel : channels) {
+    for (Channel channel : channels) {
       channel.close();
     }
   }
-  
+
   public void accept() {
     try {
       Server server = this.engine.listen(port, this);
@@ -116,13 +115,13 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       Engine.panic(e.getMessage());
     }
   }
-  
+
   public int getAcceptPort() {
     return this.acceptServer.getPort();
   }
-  
+
   public void send(Channel channel, byte[] bytes) {
-    if(channel == null)
+    if (channel == null)
       Engine.panic("send: the specified server was not found");
     try {
       channel.send(bytes, 0, bytes.length);
@@ -131,34 +130,34 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       Engine.panic(e.getMessage());
     }
   }
-  
+
   public void runBurstBroadcastThread(String message) {
     Messenger messenger = this;
     Runnable broadcast = new Runnable() {
       @Override
       public void run() {
-        for(;;) {
+        for (;;) {
           messenger.broadcast((message + " broadcasted from " + messenger.getAcceptPort()).getBytes());
         }
       }
-      
+
     };
     Thread broadcastThread = new Thread(broadcast, "broadcastThread");
     broadcastThread.start();
   }
 
-	public void setConnectCallback(ConnectCallback connectCallback) {
-		this.connectCallback = connectCallback;
-		this.setClosedCallback(connectCallback);
-	}
+  public void setConnectCallback(ConnectCallback connectCallback) {
+    this.connectCallback = connectCallback;
+    this.setClosedCallback(connectCallback);
+  }
 
-	public void setAcceptCallback(AcceptCallback acceptCallback) {
-		this.acceptCallback = acceptCallback;
-		this.setClosedCallback(acceptCallback);
-	}
-	
-	public void setClosedCallback(ClosableCallback callback) {
-	  this.closableCallback = callback;
-	}
-	
+  public void setAcceptCallback(AcceptCallback acceptCallback) {
+    this.acceptCallback = acceptCallback;
+    this.setClosedCallback(acceptCallback);
+  }
+
+  public void setClosedCallback(ClosableCallback callback) {
+    this.closableCallback = callback;
+  }
+
 }

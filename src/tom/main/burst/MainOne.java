@@ -26,7 +26,7 @@ public class MainOne {
     List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();
     Messenger messenger = new Messenger(engine, 22380);
     PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);
-   
+
   }
 
 }

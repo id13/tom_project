@@ -17,153 +17,153 @@ import messages.util.ByteUtil;
  */
 public class WaitingMessage implements Comparable<WaitingMessage> {
 
-	private InetSocketAddress author;
-	private String content;
-	private long crc;
-	private int logicalClock;
-	private Set<InetSocketAddress> receivedAck = new HashSet<>();
+  private InetSocketAddress author;
+  private String content;
+  private long crc;
+  private int logicalClock;
+  private Set<InetSocketAddress> receivedAck = new HashSet<>();
 
-	/**
-	 * Build a waiting message from a Message received. This method automatically
-	 * adds the address to the set.
-	 * 
-	 * @param message:
-	 *          a Message received of type TYPE_MESSAGE.
-	 * @param author:
-	 *          the InetSocketAddress from which this message has been received.
-	 */
-	public WaitingMessage(Message message, InetSocketAddress author) {
-		if (message.getMessageType() == Message.MESSAGE) {
-			this.content = message.getContent();
-			this.logicalClock = message.getLogicalClock();
-			this.author = author;
-			this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
-		} else {
-			Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
-		}
-		receivedAck.add(author);
-	}
+  /**
+   * Build a waiting message from a Message received. This method automatically
+   * adds the address to the set.
+   * 
+   * @param message:
+   *          a Message received of type TYPE_MESSAGE.
+   * @param author:
+   *          the InetSocketAddress from which this message has been received.
+   */
+  public WaitingMessage(Message message, InetSocketAddress author) {
+    if (message.getMessageType() == Message.MESSAGE) {
+      this.content = message.getContent();
+      this.logicalClock = message.getLogicalClock();
+      this.author = author;
+      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
+    } else {
+      Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
+    }
+    receivedAck.add(author);
+  }
 
-	/**
-	 * Build a waiting message from a Message that we are sending.
-	 * 
-	 * @param message:
-	 *          A Message from us, of type TYPE_MESSAGE.
-	 * @param Peer:
-	 *          The peer sending the message.
-	 */
-	public WaitingMessage(Message message, Peer peer) {
-		if (message.getMessageType() == Message.MESSAGE) {
-			this.content = message.getContent();
-			this.logicalClock = message.getLogicalClock();
-			this.author = peer.getMyAddress();
-			this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
-		} else {
-			Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
-		}
-	}
+  /**
+   * Build a waiting message from a Message that we are sending.
+   * 
+   * @param message:
+   *          A Message from us, of type TYPE_MESSAGE.
+   * @param Peer:
+   *          The peer sending the message.
+   */
+  public WaitingMessage(Message message, Peer peer) {
+    if (message.getMessageType() == Message.MESSAGE) {
+      this.content = message.getContent();
+      this.logicalClock = message.getLogicalClock();
+      this.author = peer.getMyAddress();
+      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
+    } else {
+      Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
+    }
+  }
 
-	/**
-	 * Build a waiting message from an ACK of a message which has not been
-	 * received yet.
-	 * 
-	 * @param ack
-	 * @param address
-	 *          The author of the ACK.
-	 */
-	public WaitingMessage(AckMessage ack, InetSocketAddress address) {
-		this.author = ack.getAuthorOfAckedMessage();
-		this.logicalClock = ack.getLogicalClockAuthor();
-		this.receivedAck.add(address);
-		this.crc = ack.getCrc32();
-	}
+  /**
+   * Build a waiting message from an ACK of a message which has not been
+   * received yet.
+   * 
+   * @param ack
+   * @param address
+   *          The author of the ACK.
+   */
+  public WaitingMessage(AckMessage ack, InetSocketAddress address) {
+    this.author = ack.getAuthorOfAckedMessage();
+    this.logicalClock = ack.getLogicalClockAuthor();
+    this.receivedAck.add(address);
+    this.crc = ack.getCrc32();
+  }
 
-	/**
-	 * This method treat an ACK by verifying it and adding the address to the set
-	 * containing address having acknowledged the message.
-	 * 
-	 * @param address:
-	 *          The address from which the ACK has been sent.
-	 * @param ackMessage:
-	 *          The ACK received.
-	 */
-	public void addAck(InetSocketAddress address, AckMessage ackMessage) {
-		if (ackMessage.getCrc32() != crc || ackMessage.getLogicalClock() <= this.logicalClock) {
-			Engine.panic("The ack doesn't correspond to the acked message or there is a problem with the logical clock.");
-		}
-		if (receivedAck.contains(address)) {
-			Engine.panic("This ack has already been received");
-		}
-		receivedAck.add(address);
-	}
+  /**
+   * This method treat an ACK by verifying it and adding the address to the set
+   * containing address having acknowledged the message.
+   * 
+   * @param address:
+   *          The address from which the ACK has been sent.
+   * @param ackMessage:
+   *          The ACK received.
+   */
+  public void addAck(InetSocketAddress address, AckMessage ackMessage) {
+    if (ackMessage.getCrc32() != crc || ackMessage.getLogicalClock() <= this.logicalClock) {
+      Engine.panic("The ack doesn't correspond to the acked message or there is a problem with the logical clock.");
+    }
+    if (receivedAck.contains(address)) {
+      Engine.panic("This ack has already been received");
+    }
+    receivedAck.add(address);
+  }
 
-	/**
-	 * Add the message to the waiting message. This method assumes that the
-	 * waiting message correspond to the message. That means that the received ACK
-	 * must have acknowledged this message. This method adds the content and adds
-	 * the address to the set of ACK.
-	 * 
-	 * @param address
-	 * @param message
-	 */
-	public void addMessage(InetSocketAddress address, Message message) {
-		if (content != null || logicalClock != message.getLogicalClock() || !author.equals(address)) {
-			Engine.panic("The message doesn't correspond to the waiting message");
-		}
-		if (ByteUtil.computeCRC32(ByteUtil.writeString(message.getContent())) != crc) {
-			Engine.panic("wrong CRC.");
-		}
-		this.content = message.getContent();
-		this.receivedAck.add(address);
-	}
+  /**
+   * Add the message to the waiting message. This method assumes that the
+   * waiting message correspond to the message. That means that the received ACK
+   * must have acknowledged this message. This method adds the content and adds
+   * the address to the set of ACK.
+   * 
+   * @param address
+   * @param message
+   */
+  public void addMessage(InetSocketAddress address, Message message) {
+    if (content != null || logicalClock != message.getLogicalClock() || !author.equals(address)) {
+      Engine.panic("The message doesn't correspond to the waiting message");
+    }
+    if (ByteUtil.computeCRC32(ByteUtil.writeString(message.getContent())) != crc) {
+      Engine.panic("wrong CRC.");
+    }
+    this.content = message.getContent();
+    this.receivedAck.add(address);
+  }
 
-	public String getContent() {
-		return content;
-	}
+  public String getContent() {
+    return content;
+  }
 
-	/**
-	 * 
-	 * @return the logical clock of the author of the message, at the time when he
-	 *         sent it.
-	 */
-	public int getLogicalClock() {
-		return logicalClock;
-	}
+  /**
+   * 
+   * @return the logical clock of the author of the message, at the time when he
+   *         sent it.
+   */
+  public int getLogicalClock() {
+    return logicalClock;
+  }
 
-	/**
-	 * We implements Comparable because we use in MessagesStock a PriorityQueue of
-	 * WaitingMessage. A message is lower than another if its logical clock is
-	 * lower. In that way, the WaitingMessage with the lower logical clock will be
-	 * the first element of the priority queue. If two messages have the same
-	 * logical clock, there are arbitrary ordered by comparison of the strings
-	 * representing the inetSocketAddress. So, as two messages can't have the same
-	 * author and the same logicalClock, two messages are always comparable.
-	 */
-	@Override
-	public int compareTo(WaitingMessage o) {
-		if (this.logicalClock < o.logicalClock) {
-			return -1;
-		} else if (this.logicalClock > o.logicalClock) {
-			return 1;
-		} else {
-			if (this.author.getPort() != o.author.getPort()) {
-				Integer int1 = this.author.getPort();
-				Integer int2 = o.author.getPort();
-				return int1.compareTo(int2);
-			} else {
-				String ip1 = ByteUtil.readString(this.author.getAddress().getAddress());
-				String ip2 = ByteUtil.readString(o.author.getAddress().getAddress());
-				return ip1.compareTo(ip2);
-			}
-		}
-	}
+  /**
+   * We implements Comparable because we use in MessagesStock a PriorityQueue of
+   * WaitingMessage. A message is lower than another if its logical clock is
+   * lower. In that way, the WaitingMessage with the lower logical clock will be
+   * the first element of the priority queue. If two messages have the same
+   * logical clock, there are arbitrary ordered by comparison of the strings
+   * representing the inetSocketAddress. So, as two messages can't have the same
+   * author and the same logicalClock, two messages are always comparable.
+   */
+  @Override
+  public int compareTo(WaitingMessage o) {
+    if (this.logicalClock < o.logicalClock) {
+      return -1;
+    } else if (this.logicalClock > o.logicalClock) {
+      return 1;
+    } else {
+      if (this.author.getPort() != o.author.getPort()) {
+        Integer int1 = this.author.getPort();
+        Integer int2 = o.author.getPort();
+        return int1.compareTo(int2);
+      } else {
+        String ip1 = ByteUtil.readString(this.author.getAddress().getAddress());
+        String ip2 = ByteUtil.readString(o.author.getAddress().getAddress());
+        return ip1.compareTo(ip2);
+      }
+    }
+  }
 
-	public InetSocketAddress getAuthor() {
-		return author;
-	}
+  public InetSocketAddress getAuthor() {
+    return author;
+  }
 
-	public Set<InetSocketAddress> getReceivedAck() {
-		return receivedAck;
-	}
+  public Set<InetSocketAddress> getReceivedAck() {
+    return receivedAck;
+  }
 
 }

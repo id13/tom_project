@@ -21,9 +21,9 @@ public class MainTwo {
       }
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
-    engineThread.start(); 
-    InetSocketAddress myAddress = new InetSocketAddress("localhost", 12381); 
-    List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();      
+    engineThread.start();
+    InetSocketAddress myAddress = new InetSocketAddress("localhost", 12381);
+    List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();
     addressesToConnect.add(new InetSocketAddress("localhost", 12380));
     Messenger messenger = new Messenger(engine, 22381);
     PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);

@@ -11,7 +11,7 @@ public class MainThree {
   }
 
   public static void main(String[] args) {
-    System.setProperty("java.net.preferIPv4Stack" , "true");
+    System.setProperty("java.net.preferIPv4Stack", "true");
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
       public void run() {
@@ -21,16 +21,16 @@ public class MainThree {
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
     Messenger messenger = new Messenger(engine, 62124);
-    try {    
+    try {
       messenger.accept();
       messenger.connect("localhost", 43124);
       messenger.connect("localhost", 53124);
       messenger.runBurstBroadcastThread("hello !");
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       messenger.closeAllConnections();
       ex.printStackTrace();
       Engine.panic(ex.getMessage());
-    } 
+    }
   }
 
 }

@@ -25,17 +25,17 @@ public class NioEngine extends Engine {
 
   private static NioEngine nioEngine = new NioEngine();
   private static Object registerLock = new Object();
-  
+
   public void wakeUpSelector() {
     this.eventSelector.wakeup();
   }
-  
+
   public static NioEngine getNioEngine() {
     return nioEngine;
   }
-  
+
   private Selector eventSelector;
-  
+
   private NioEngine() {
     super();
     try {
@@ -45,19 +45,19 @@ public class NioEngine extends Engine {
       Engine.panic(e.getMessage());
     }
   }
-  
+
   private void handleGentlyException(Exception ex) {
     System.err.println("NioEngine got an exeption: " + ex.getMessage());
     ex.printStackTrace(System.err);
-    System.exit(-1);    
+    System.exit(-1);
   }
 
   private SelectionKey register(SelectableChannel channel, Object o, int intentions) {
     SelectionKey key = null;
     try {
-      synchronized(NioEngine.registerLock) {
+      synchronized (NioEngine.registerLock) {
         this.eventSelector.wakeup();
-        key = channel.register(this.eventSelector, intentions); 
+        key = channel.register(this.eventSelector, intentions);
       }
     } catch (ClosedChannelException e) {
       this.handleGentlyException(e);
@@ -65,19 +65,20 @@ public class NioEngine extends Engine {
     key.attach(o);
     return key;
   }
-  
+
   public void cancelKey(SelectionKey key) {
-    synchronized(registerLock) {
+    synchronized (registerLock) {
       key.cancel();
     }
   }
-  
+
   @Override
   public void mainloop() {
     long delay = 500;
     try {
       for (;;) {
-        synchronized(registerLock) {}
+        synchronized (registerLock) {
+        }
         eventSelector.select(delay);
         Iterator<?> selectedKeys = this.eventSelector.selectedKeys().iterator();
         if (selectedKeys.hasNext()) {
@@ -88,27 +89,25 @@ public class NioEngine extends Engine {
           } else {
             Object subject = key.attachment();
             if (key.isAcceptable()) {
-              Messenger messenger = (Messenger)subject;
+              Messenger messenger = (Messenger) subject;
               ServerSocketChannel sc = (ServerSocketChannel) key.channel();
               SocketChannel socket = sc.accept();
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
               NioChannel channel = new NioChannel(socket);
-              NioServer server = new NioServer(
-                  socket.socket().getLocalPort(), 
-                  socket, 
+              NioServer server = new NioServer(socket.socket().getLocalPort(), socket,
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setDeliverCallback(messenger);
               channel.setClosableCallback(messenger);
               messenger.accepted(server, channel);
             } else if (key.isReadable()) {
-              ReceiveCallback receiver = (ReceiveCallback)subject;
+              ReceiveCallback receiver = (ReceiveCallback) subject;
               receiver.handleReceive();
             } else if (key.isWritable()) {
-              WriteCallback writer = (WriteCallback)subject;
+              WriteCallback writer = (WriteCallback) subject;
               writer.handleWrite();
             } else if (key.isConnectable()) {
-              Messenger messenger = (Messenger)subject;
+              Messenger messenger = (Messenger) subject;
               SocketChannel socket = (SocketChannel) key.channel();
               socket.configureBlocking(false);
               socket.socket().setTcpNoDelay(true);
@@ -116,9 +115,7 @@ public class NioEngine extends Engine {
               NioChannel channel = new NioChannel(socket);
               channel.setDeliverCallback(messenger);
               channel.setClosableCallback(messenger);
-              Server nioServer = new NioServer(
-                  socket.socket().getLocalPort(), 
-                  socket, 
+              Server nioServer = new NioServer(socket.socket().getLocalPort(), socket,
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setServer(nioServer);
               messenger.connected(channel);
@@ -128,7 +125,7 @@ public class NioEngine extends Engine {
       }
     } catch (Exception ex) {
       this.handleGentlyException(ex);
-    }    
+    }
   }
 
   @Override
@@ -137,8 +134,7 @@ public class NioEngine extends Engine {
     socket.configureBlocking(false);
     InetSocketAddress isa = new InetSocketAddress("localhost", port);
     socket.bind(isa);
-    return new NioServer(port, socket, 
-        this.register(socket, callback, SelectionKey.OP_ACCEPT));
+    return new NioServer(port, socket, this.register(socket, callback, SelectionKey.OP_ACCEPT));
   }
 
   @Override

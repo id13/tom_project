@@ -21,14 +21,14 @@ public class MainThree {
       }
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
-    engineThread.start();   
+    engineThread.start();
     InetSocketAddress myAddress = new InetSocketAddress("localhost", 12382);
-    List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();      
+    List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();
     addressesToConnect.add(new InetSocketAddress("localhost", 12380));
     addressesToConnect.add(new InetSocketAddress("localhost", 12381));
     Messenger messenger = new Messenger(engine, 22382);
-    PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);           
-    
+    PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);
+
   }
 
 }

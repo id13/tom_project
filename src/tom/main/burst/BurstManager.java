@@ -22,19 +22,19 @@ import messages.engine.Messenger;
 import messages.engine.Server;
 import messages.engine.nio.NioEngine;
 
-public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback{
+public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback {
 
-  private HashMap< InetSocketAddress , LinkedList<String> > messagesToChek;
+  private HashMap<InetSocketAddress, LinkedList<String>> messagesToChek;
   private Set<InetSocketAddress> slaves = new HashSet<>();
   private Set<InetSocketAddress> slavesToConnect;
   private Messenger messenger;
   private int port;
-  
+
   public BurstManager(int port) {
     this.port = port;
-    this.messagesToChek = new HashMap<InetSocketAddress , LinkedList<String> >();
+    this.messagesToChek = new HashMap<InetSocketAddress, LinkedList<String>>();
   }
-  
+
   public void createMessenger(Set<InetSocketAddress> slavesToConnect) {
     this.slavesToConnect = slavesToConnect;
     this.messenger = new Messenger(NioEngine.getNioEngine(), this.port);
@@ -42,12 +42,12 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     this.messenger.setClosedCallback(this);
     this.messenger.setDeliverCallback(this);
     messenger.accept();
-    for(InetSocketAddress slaveToConnect : this.slavesToConnect) {
+    for (InetSocketAddress slaveToConnect : this.slavesToConnect) {
       this.messenger.connect("localhost", slaveToConnect.getPort());
       this.messagesToChek.put(new InetSocketAddress("localhost", slaveToConnect.getPort()), new LinkedList<String>());
     }
   }
-  
+
   public static void main(String[] args) {
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
@@ -57,9 +57,9 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       }
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
-    engineThread.start();  
+    engineThread.start();
     BurstManager manager = new BurstManager(22379);
-    Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();      
+    Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();
     addressesToConnect.add(new InetSocketAddress("localhost", 22380));
     addressesToConnect.add(new InetSocketAddress("localhost", 22381));
     addressesToConnect.add(new InetSocketAddress("localhost", 22382));
@@ -71,24 +71,24 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     String baseMessage = null;
     String nextMessage = null;
     // First we check whether the first message of each list are the same
-    for(Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
-      if(messages.getValue().isEmpty())
+    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
+      if (messages.getValue().isEmpty())
         return;
       nextMessage = messages.getValue().peek();
-      if(baseMessage == null) {
+      if (baseMessage == null) {
         baseMessage = nextMessage;
       } else {
-        if(!baseMessage.equals(nextMessage))
+        if (!baseMessage.equals(nextMessage))
           Engine.panic("the enslaved peers did not delivered the same message");
       }
     }
     // If so, we remove these messages
-    for(Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
+    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
       messages.getValue().poll();
     }
     System.out.println("message delivered by enslaved peers : " + nextMessage);
   }
-  
+
   @Override
   public void deliver(Channel channel, byte[] bytes) {
     try {
@@ -105,7 +105,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   public void sendMessagerOrder(String content) {
     this.messenger.broadcast(content.getBytes());
   }
-  
+
   @Override
   public void closed(Channel channel) {
     this.messenger.closeAllConnections();
@@ -117,10 +117,10 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Runnable burstLoop = new Runnable() {
       @Override
       public void run() {
-      	int cpt = 0;
-        for(;;) {
+        int cpt = 0;
+        for (;;) {
           try {
-            // On my computer, this is the limit value, bellow that, the tom 
+            // On my computer, this is the limit value, bellow that, the tom
             // layer begins to fall apart
             Thread.currentThread().sleep(60);
           } catch (InterruptedException e) {
@@ -128,7 +128,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
             Thread.currentThread().interrupt();
             Engine.panic(e.getMessage());
           }
-          manager.sendMessagerOrder("hello number " + cpt );
+          manager.sendMessagerOrder("hello number " + cpt);
           cpt++;
         }
       }
@@ -136,7 +136,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Thread burstThread = new Thread(burstLoop, "burstThread");
     burstThread.start();
   }
-  
+
   @Override
   public void connected(Channel channel) {
     try {
@@ -146,14 +146,14 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       e.printStackTrace();
       Engine.panic(e.getMessage());
     }
-    if(this.slavesToConnect.isEmpty())
+    if (this.slavesToConnect.isEmpty())
       this.startBursting();
   }
 
   @Override
   public void accepted(Server server, Channel channel) {
     // XXX Auto-generated method stub
-    
+
   }
 
 }

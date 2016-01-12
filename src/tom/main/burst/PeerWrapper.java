@@ -16,11 +16,11 @@ import tom.PeerImpl;
 import tom.TomDeliverCallback;
 
 public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCallback, TomDeliverCallback {
-  
+
   Messenger messenger;
   Peer peer;
   List<InetSocketAddress> addressesToConnect;
-  
+
   public PeerWrapper(Messenger messenger, InetSocketAddress peerAddress, List<InetSocketAddress> addressesToConnect) {
     this.messenger = messenger;
     this.peer = new PeerImpl(peerAddress, this);
@@ -31,7 +31,7 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
     messenger.setConnectCallback(this);
     messenger.accept();
   }
-  
+
   @Override
   public void closed(Channel channel) {
     Engine.panic("manager closed the channel");
@@ -39,7 +39,7 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   @Override
   public void accepted(Server server, Channel channel) {
-    for(InetSocketAddress address : this.addressesToConnect) {
+    for (InetSocketAddress address : this.addressesToConnect) {
       peer.connect(address);
     }
   }
@@ -52,11 +52,12 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   @Override
   public void deliver(InetSocketAddress from, String message) {
 
-    messenger.broadcast((message + " from " + Arrays.toString(from.getAddress().getAddress()) + ':' + from.getPort()).getBytes());
+    messenger.broadcast(
+        (message + " from " + Arrays.toString(from.getAddress().getAddress()) + ':' + from.getPort()).getBytes());
   }
 
   @Override
   public void connected(Channel channel) {
   }
-  
+
 }
