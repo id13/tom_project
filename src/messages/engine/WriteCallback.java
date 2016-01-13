@@ -2,7 +2,7 @@ package messages.engine;
 
 import java.io.IOException;
 
-public interface WriteCallback {
+interface WriteCallback {
 
   /**
    * Handles the writing into an input such as a channel

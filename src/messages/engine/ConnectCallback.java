@@ -1,6 +1,6 @@
 package messages.engine;
 
-public interface ConnectCallback extends ClosableCallback {
+interface ConnectCallback extends ClosableCallback {
 
   /**
    * Callback to notify that a connection has succeeded.

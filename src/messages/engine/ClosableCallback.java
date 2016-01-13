@@ -1,6 +1,6 @@
 package messages.engine;
 
-public interface ClosableCallback {
+interface ClosableCallback {
   /**
    * Callback to notify that a channel has been closed.
    * 

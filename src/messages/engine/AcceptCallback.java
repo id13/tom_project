@@ -1,6 +1,6 @@
 package messages.engine;
 
-public interface AcceptCallback extends ClosableCallback {
+interface AcceptCallback extends ClosableCallback {
   /**
    * Callback to notify about an accepted connection.
    * 

@@ -2,7 +2,7 @@ package messages.engine;
 
 import java.io.IOException;
 
-public interface ReceiveCallback {
+interface ReceiveCallback {
 
   /**
    * Callback to handle processing of a readable input such as a channel
