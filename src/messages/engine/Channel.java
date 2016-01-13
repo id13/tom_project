@@ -28,6 +28,16 @@ public abstract class Channel implements Comparable<Channel> {
   public abstract InetSocketAddress getRemoteAddress() throws IOException;
 
   /**
+   * Get the Inet socket address the remote host is using to accept new connection
+   * It is used to uniquely identify a remote host.
+   * @return
+   * @throws IOException
+   */
+  public abstract InetSocketAddress getRemoteAcceptingAddress() throws IOException;
+
+  
+  
+  /**
    * Sending the given byte array, a copy is made into internal buffers, so the
    * array can be reused after sending it.
    * 
@@ -61,4 +71,17 @@ public abstract class Channel implements Comparable<Channel> {
    * @param callback
    */
   public abstract void setClosableCallback(ClosableCallback callback);
+  
+  /**
+   * Attach a callback to notify when the channel is connected (ie accepted by the remote host)
+   * @param callback
+   */
+  public abstract void setConnectCallback(ConnectCallback callback);
+  
+  /**
+   * Attach a callback to notify when the channel is accepted
+   * @param callback
+   */
+  public abstract void setAcceptCallback(AcceptCallback callback);
+  
 }

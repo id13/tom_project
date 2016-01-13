@@ -90,8 +90,9 @@ public class NioEngine extends Engine {
               NioServer server = new NioServer(socket.socket().getLocalPort(), socket,
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setDeliverCallback(messenger);
-              channel.setClosableCallback(messenger);
-              messenger.accepted(server, channel);
+              channel.setAcceptCallback(messenger);
+              channel.setServer(server);
+              channel.sendHello(messenger.getAcceptAddress());
             } else if (key.isReadable()) {
               ReceiveCallback receiver = (ReceiveCallback) subject;
               receiver.handleReceive();
@@ -106,11 +107,11 @@ public class NioEngine extends Engine {
               socket.finishConnect();
               NioChannel channel = new NioChannel(socket);
               channel.setDeliverCallback(messenger);
-              channel.setClosableCallback(messenger);
+              channel.setConnectCallback(messenger);
               Server nioServer = new NioServer(socket.socket().getLocalPort(), socket,
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setServer(nioServer);
-              messenger.connected(channel);
+              channel.sendHello(messenger.getAcceptAddress());
             }
           }
         }

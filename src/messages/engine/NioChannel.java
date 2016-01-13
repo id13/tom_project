@@ -2,6 +2,7 @@ package messages.engine;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -19,6 +20,9 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
   private static final int READING_MESSAGE = 22;
   private static final int READING_CHECKSUM = 23;
 
+  private static final int MESSAGE = 30;
+  private static final int HELLO = 31;
+
   private SocketChannel channel;
   private SelectionKey key;
   private ByteBuffer receiveBuffer;
@@ -28,7 +32,10 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
   private Integer sendingState;
   private Integer receivingState;
   private ClosableCallback closableCallback;
+  private AcceptCallback acceptCallback;
+  private ConnectCallback connectCallback;
   private InetSocketAddress remoteLocalAddress;
+  private InetSocketAddress remoteAcceptingAddress;
   private ConcurrentLinkedQueue<ByteBuffer> dataToSend;
   private byte[] currentMessage;
 
@@ -54,15 +61,25 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
 
   @Override
   public void send(byte[] bytes, int offset, int length) throws IOException {
+    this.send(bytes, offset, length, MESSAGE);
+  }
+
+  private void send(byte[] bytes, int offset, int length, int type) {
     synchronized (sendingState) {
       ByteBuffer sendBuffer;
+      int lengthWithType = length + 4;
       if (state != CONNECTED)
         return;
       sendingState = NioChannel.SENDING;
-      sendBuffer = ByteBuffer.allocate(4 + length + 8);
-      sendBuffer.putInt(length);
-      sendBuffer.put(bytes, offset, length);
-      sendBuffer.putLong(ByteUtil.computeCRC32(bytes));
+      byte[] messageWithType = new byte[lengthWithType];
+      ByteUtil.writeInt32(messageWithType, 0, type);
+      System.arraycopy(bytes, 0, messageWithType, 4, length);
+      // the message is composed of
+      // LENGTH (4 bytes) | TYPE (4 bytes) | CONTENT | CRC (8 bytes)
+      sendBuffer = ByteBuffer.allocate(4 + lengthWithType + 8);
+      sendBuffer.putInt(lengthWithType);
+      sendBuffer.put(messageWithType);
+      sendBuffer.putLong(ByteUtil.computeCRC32(messageWithType));
       sendBuffer.position(0);
       this.dataToSend.add(sendBuffer);
       this.key.interestOps(SelectionKey.OP_WRITE | SelectionKey.OP_READ);
@@ -70,6 +87,12 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
     }
   }
 
+  public void sendHello(InetSocketAddress address) {
+    byte[] content = new byte[8];
+    ByteUtil.writeInetSocketAddress(content, 0, address);
+    this.send(content, 0, 8, HELLO);
+  }
+  
   @Override
   public void handleWrite() throws IOException {
     if (state != CONNECTED)
@@ -108,6 +131,29 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
     } catch (IOException e) {
       e.printStackTrace();
       Engine.panic("can not close channel");
+    }
+  }
+
+  
+  
+  private void deliver(byte[] bytes) {
+    int type = ByteUtil.readInt32(bytes, 0);
+    byte [] content = new byte[bytes.length - 4];
+    System.arraycopy(bytes, 4, content, 0, content.length);
+    if(type == MESSAGE) {
+      this.deliverCallback.deliver(this, content);
+    } else if(type == HELLO) {
+      try {
+        this.remoteAcceptingAddress = ByteUtil.readInetSocketAddress(content, 0);
+        if(this.connectCallback != null) {
+          this.connectCallback.connected(this);
+        } else {
+          this.acceptCallback.accepted(this.server, this);
+        }
+      } catch (UnknownHostException e) {
+        e.printStackTrace();
+        Engine.panic(e.getMessage());
+      }
     }
   }
 
@@ -178,7 +224,7 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
           Engine.panic("CRC checksum error");
         this.receiveBuffer = ByteBuffer.allocate(4);
         this.receivingState = READING_LENGTH;
-        this.deliverCallback.deliver(this, this.currentMessage);
+        this.deliver(this.currentMessage);
         return;
       default:
         Engine.panic("handleReceive: falling into unexpected state");
@@ -198,9 +244,27 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
   public Server getServer() {
     return this.server;
   }
-
+ 
+  @Override
+  public void setAcceptCallback(AcceptCallback callback) {
+    this.acceptCallback = callback;
+    this.setClosableCallback(callback);
+  }
+  
+  @Override
+  public void setConnectCallback(ConnectCallback callback) {
+    this.connectCallback = callback;
+    this.setClosableCallback(callback);
+  }
+  
   @Override
   public void setClosableCallback(ClosableCallback callback) {
     this.closableCallback = callback;
   }
+
+  @Override
+  public InetSocketAddress getRemoteAcceptingAddress() throws IOException {
+    return this.remoteAcceptingAddress;
+  }
+
 }

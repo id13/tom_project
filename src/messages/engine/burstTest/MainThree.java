@@ -1,5 +1,6 @@
 package messages.engine.burstTest;
 
+import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.NioEngine;
@@ -21,6 +22,8 @@ public class MainThree {
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
     Messenger messenger = new Messenger(engine, 62124);
+    DeliverCallback callback = new DeliverCallbackImpl();
+    messenger.setDeliverCallback(callback);    
     try {
       messenger.accept();
       messenger.connect("localhost", 43124);

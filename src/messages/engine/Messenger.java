@@ -2,7 +2,10 @@ package messages.engine;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,43 +18,60 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
   private Engine engine;
   private int port;
-  private List<Channel> channels = new ArrayList<Channel>();
+  private HashMap<InetSocketAddress, Channel> channels = new HashMap<InetSocketAddress, Channel>();
   private Server acceptServer;
-  private DeliverCallback deliverCallback;
-  private ConnectCallback connectCallback;
-  private AcceptCallback acceptCallback;
-  private ClosableCallback closableCallback;
-
+  private messages.callbacks.DeliverCallback deliverCallback;
+  private messages.callbacks.ConnectCallback connectCallback;
+  private messages.callbacks.AcceptCallback acceptCallback;
+  private messages.callbacks.ClosableCallback closableCallback;
+  private InetSocketAddress acceptAddress;
+  
   public Messenger(Engine engine, int port) {
     super();
     this.port = port;
     this.engine = engine;
   }
 
-  public void setDeliverCallback(DeliverCallback callback) {
+  public void setDeliverCallback(messages.callbacks.DeliverCallback callback) {
     this.deliverCallback = callback;
   }
 
   @Override
   public synchronized void deliver(Channel channel, byte[] bytes) {
-    this.deliverCallback.deliver(channel, bytes);
+    try {
+      this.deliverCallback.delivered(channel.getRemoteAcceptingAddress(), bytes);
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
   }
 
   @Override
   public void connected(Channel channel) {
-    this.channels.add(channel);
-    if (this.connectCallback != null) {
-      this.connectCallback.connected(channel);
+    try {
+      this.channels.put(channel.getRemoteAcceptingAddress(), channel);
+      if (this.connectCallback != null) {
+        this.connectCallback.connected(channel.getRemoteAcceptingAddress());
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
     }
+
   }
 
   @Override
   public void accepted(Server server, Channel channel) {
-    channel.setServer(server);
-    this.channels.add(channel);
-    if (this.acceptCallback != null) {
-      this.acceptCallback.accepted(server, channel);
+    try {
+      this.channels.put(channel.getRemoteAcceptingAddress(), channel);
+      if (this.acceptCallback != null) {
+        this.acceptCallback.accepted(channel.getRemoteAcceptingAddress());
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
     }
+
   }
 
   @Override
@@ -63,13 +83,24 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       Engine.panic(e.getMessage());
     }
     this.channels.remove(channel);
-    this.closableCallback.closed(channel);
+    try {
+      this.closableCallback.closed(channel.getRemoteAcceptingAddress());
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+  }
+  
+  public InetSocketAddress getAcceptAddress() throws UnknownHostException {
+    if(this.acceptAddress == null)
+      this.acceptAddress = new InetSocketAddress(Inet4Address.getLocalHost(), this.port);
+    return this.acceptAddress;
   }
 
   public synchronized void broadcast(byte[] bytes) {
-    for (Channel channel : channels) {
+    for (Entry<InetSocketAddress, Channel> channel : channels.entrySet()) {
       try {
-        channel.send(bytes, 0, bytes.length);
+        channel.getValue().send(bytes, 0, bytes.length);
       } catch (IOException e) {
         e.printStackTrace();
         Engine.panic(e.getMessage());
@@ -99,8 +130,8 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
 
   public void closeAllConnections() {
     this.stopAccept();
-    for (Channel channel : channels) {
-      channel.close();
+    for (Entry<InetSocketAddress, Channel> channel : channels.entrySet()) {
+      channel.getValue().close();
     }
   }
 
@@ -118,6 +149,12 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     return this.acceptServer.getPort();
   }
 
+  /**
+   * sends message composed of bytes through a channel
+   * @param channel
+   * @param bytes
+   * @deprecated this method is here only for legacy purpose
+   */
   public void send(Channel channel, byte[] bytes) {
     if (channel == null)
       Engine.panic("send: the specified server was not found");
@@ -135,6 +172,11 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
       @Override
       public void run() {
         for (;;) {
+          try {
+            Thread.sleep(10);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
           messenger.broadcast((message + " broadcasted from " + messenger.getAcceptPort()).getBytes());
         }
       }
@@ -144,17 +186,17 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     broadcastThread.start();
   }
 
-  public void setConnectCallback(ConnectCallback connectCallback) {
+  public void setConnectCallback(messages.callbacks.ConnectCallback connectCallback) {
     this.connectCallback = connectCallback;
     this.setClosedCallback(connectCallback);
   }
 
-  public void setAcceptCallback(AcceptCallback acceptCallback) {
+  public void setAcceptCallback(messages.callbacks.AcceptCallback acceptCallback) {
     this.acceptCallback = acceptCallback;
     this.setClosedCallback(acceptCallback);
   }
 
-  public void setClosedCallback(ClosableCallback callback) {
+  public void setClosedCallback(messages.callbacks.ClosableCallback callback) {
     this.closableCallback = callback;
   }
 
