@@ -1,4 +1,4 @@
-package messages.engine.nio;
+package messages.engine;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -7,13 +7,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import messages.engine.Channel;
-import messages.engine.ClosableCallback;
-import messages.engine.DeliverCallback;
-import messages.engine.Engine;
-import messages.engine.ReceiveCallback;
-import messages.engine.Server;
-import messages.engine.WriteCallback;
 import messages.util.ByteUtil;
 
 public class NioChannel extends Channel implements ReceiveCallback, WriteCallback {

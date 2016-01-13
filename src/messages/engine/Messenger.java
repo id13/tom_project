@@ -11,8 +11,6 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import messages.engine.nio.NioServer;
-
 public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallback {
 
   private Engine engine;

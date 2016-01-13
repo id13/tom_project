@@ -1,10 +1,8 @@
-package messages.engine.nio;
+package messages.engine;
 
 import java.io.IOException;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectionKey;
-
-import messages.engine.Server;
 
 public class NioServer extends Server {
 

@@ -19,8 +19,8 @@ import messages.engine.ConnectCallback;
 import messages.engine.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
+import messages.engine.NioEngine;
 import messages.engine.Server;
-import messages.engine.nio.NioEngine;
 
 public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback {
 

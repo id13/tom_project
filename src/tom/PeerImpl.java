@@ -9,8 +9,8 @@ import messages.engine.Channel;
 import messages.engine.ConnectCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
+import messages.engine.NioEngine;
 import messages.engine.Server;
-import messages.engine.nio.NioEngine;
 
 public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 

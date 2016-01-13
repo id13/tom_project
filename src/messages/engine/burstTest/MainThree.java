@@ -1,8 +1,8 @@
-package messages.engine.nio.burstTest;
+package messages.engine.burstTest;
 
 import messages.engine.Engine;
 import messages.engine.Messenger;
-import messages.engine.nio.NioEngine;
+import messages.engine.NioEngine;
 
 public class MainThree {
 
