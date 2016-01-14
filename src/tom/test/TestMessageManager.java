@@ -4,12 +4,13 @@ import static org.junit.Assert.*;
 
 import java.net.InetSocketAddress;
 import org.junit.Test;
-import tom.AckMessage;
+
 import tom.DistantPeerManager;
-import tom.Message;
 import tom.MessageManager;
 import tom.Peer;
 import tom.TomDeliverCallback;
+import tom.messages.AckMessage;
+import tom.messages.Message;
 
 public class TestMessageManager {
 

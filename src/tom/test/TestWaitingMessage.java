@@ -3,11 +3,12 @@ package tom.test;
 import static org.junit.Assert.*;
 import java.net.InetSocketAddress;
 import org.junit.Test;
-import tom.Message;
+
 import tom.Peer;
-import tom.AckMessage;
 import tom.DistantPeerManager;
 import tom.WaitingMessage;
+import tom.messages.AckMessage;
+import tom.messages.Message;
 
 public class TestWaitingMessage {
 

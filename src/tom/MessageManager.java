@@ -6,6 +6,8 @@ import java.util.PriorityQueue;
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
+import tom.messages.AckMessage;
+import tom.messages.Message;
 
 /**
  * This class is used to manage the messages in order to wait ACKs before to

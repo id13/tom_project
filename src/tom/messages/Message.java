@@ -1,4 +1,4 @@
-package tom;
+package tom.messages;
 
 import messages.engine.Engine;
 import messages.util.ByteUtil;
@@ -8,7 +8,10 @@ public class Message {
   public static final byte MESSAGE = (byte) 1;
   public static final byte ACK = (byte) 2;
   public static final byte JOIN = (byte) 3;
-
+  public static final byte JOIN_REQUEST = (byte) 4;
+  public static final byte JOIN_RESPONSE = (byte) 5;
+  public static final byte NEW_MEMBER = (byte) 6;
+  public static final byte WELCOME = (byte) 7;
   private int logicalClock;
   private byte messageType;
   private String content;
@@ -41,11 +44,25 @@ public class Message {
     String content = ByteUtil.readString(bytes).substring(5); // TODO: verify
                                                               // that
     Message message = new Message(logicalClock, messageType, content);
-    if (messageType == ACK) {
-      AckMessage messageAck = new AckMessage(message);
-      return messageAck;
-    } else {
+    switch (messageType) {
+    case MESSAGE:
       return message;
+    case ACK:
+      return new AckMessage(message);
+    case JOIN:
+      // TODO
+      return null;
+    case JOIN_REQUEST:
+      return new JoinRequestMessage();
+    case JOIN_RESPONSE:
+      return new JoinResponseMessage(message);
+    case NEW_MEMBER:
+      return new NewMemberMessage(message);
+    case WELCOME:
+      return new WelcomeMessage(message);
+    default:
+      Engine.panic("Message type unknown");
+      return null;
     }
   }
 

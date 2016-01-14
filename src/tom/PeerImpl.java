@@ -7,6 +7,7 @@ import messages.callbacks.ConnectCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.NioEngine;
+import tom.messages.Message;
 
 public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 

@@ -8,8 +8,8 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import messages.util.ByteUtil;
-import tom.Message;
-import tom.AckMessage;
+import tom.messages.AckMessage;
+import tom.messages.Message;
 
 public class TestAckMessage {
 

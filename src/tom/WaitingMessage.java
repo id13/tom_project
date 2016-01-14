@@ -6,6 +6,8 @@ import java.util.Set;
 
 import messages.engine.Engine;
 import messages.util.ByteUtil;
+import tom.messages.AckMessage;
+import tom.messages.Message;
 
 /**
  * This class represent a Message waiting the acknowledgments of other peers of

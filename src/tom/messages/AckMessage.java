@@ -1,4 +1,4 @@
-package tom;
+package tom.messages;
 
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;

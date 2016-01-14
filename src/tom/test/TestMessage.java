@@ -7,7 +7,7 @@ import java.net.InetSocketAddress;
 import org.junit.Test;
 
 import messages.util.ByteUtil;
-import tom.Message;
+import tom.messages.Message;
 
 public class TestMessage {
 
