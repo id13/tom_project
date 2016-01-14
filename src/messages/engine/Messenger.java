@@ -166,6 +166,18 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     }
   }
 
+  public void send(InetSocketAddress dest, byte[] bytes) {
+    Channel channel = this.channels.get(dest);
+    if(channel == null) 
+      Engine.panic("Messenger.send() : destination " + dest.toString() + " not found in the messenger's registery");
+    try {
+      channel.send(bytes, 0, bytes.length);
+    } catch (IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+  }
+  
   public void runBurstBroadcastThread(String message) {
     Messenger messenger = this;
     Runnable broadcast = new Runnable() {
