@@ -4,13 +4,11 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
-import messages.engine.AcceptCallback;
-import messages.engine.Channel;
-import messages.engine.ConnectCallback;
-import messages.engine.DeliverCallback;
+import messages.callbacks.AcceptCallback;
+import messages.callbacks.ConnectCallback;
+import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
-import messages.engine.Server;
 import tom.Peer;
 import tom.PeerImpl;
 import tom.TomDeliverCallback;
@@ -33,20 +31,22 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   }
 
   @Override
-  public void closed(Channel channel) {
+  public void closed(InetSocketAddress address) {
     Engine.panic("manager closed the channel");
   }
 
   @Override
-  public void accepted(Server server, Channel channel) {
-    for (InetSocketAddress address : this.addressesToConnect) {
-      peer.connect(address);
+  public void accepted(InetSocketAddress address) {
+    System.out.println("Accepted " + address);
+
+    for (InetSocketAddress distantPeer : this.addressesToConnect) {
+      peer.connect(distantPeer);
     }
   }
 
   @Override
-  public void deliver(Channel channel, byte[] bytes) {
-    peer.send(new String(bytes));
+  public void delivered(InetSocketAddress from, byte[] content) {
+    peer.send(new String(content));
   }
 
   @Override
@@ -57,7 +57,7 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   }
 
   @Override
-  public void connected(Channel channel) {
+  public void connected(InetSocketAddress address) {
+    System.out.println("Connected to " + address);
   }
-
 }

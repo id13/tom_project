@@ -3,8 +3,7 @@ package tom;
 import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
 
-import messages.engine.Channel;
-import messages.engine.DeliverCallback;
+import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 
@@ -39,16 +38,14 @@ public class MessageManager implements DeliverCallback {
    * different from the TOM layer's deliver.
    */
   @Override
-  public void deliver(Channel channel, byte[] bytes) {
-    Message message = Message.getMessageReceived(bytes);
-    InetSocketAddress address = message.getAuthor();
-    distantPeerManager.addId(channel, address);
-    System.out.println("Received message (not delivered) from " + address + " : " + message);
+  public void delivered(InetSocketAddress from, byte[] content) {
+    Message message = Message.getMessageReceived(content);
+    System.out.println("Received message (not delivered) from " + from + " : " + message);
 
     if (message.getMessageType() == Message.MESSAGE) {
-      treatMessage(message, address);
+      treatMessage(message, from);
     } else if (message.getMessageType() == Message.ACK) {
-      treatAck((AckMessage) message, address);
+      treatAck((AckMessage) message, from);
     } else {
       Engine.panic("Unknown message type");
     }
@@ -63,23 +60,23 @@ public class MessageManager implements DeliverCallback {
    * 
    * @param message
    *          : the received message of type TYPE_MESSAGE.
-   * @param address
+   * @param from
    *          : the address from which the message has been sent.
    */
-  private void treatMessage(Message message, InetSocketAddress address) {
+  private void treatMessage(Message message, InetSocketAddress from) {
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
-    AckMessage ourAck = new AckMessage(message, address, logicalClock, peer.getMyAddress());
+    AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (messenger != null) { // Useful in JUnitTest
       messenger.broadcast(ourAck.getFullMessage());
     }
     for (WaitingMessage waitingMessage : waitingMessages) {
-      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(address)) {
-        waitingMessage.addMessage(address, message);
+      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
+        waitingMessage.addMessage(from, message);
         deliverHeadIfNeeded();
         return;
       }
     }
-    WaitingMessage waitingMessage = new WaitingMessage(message, address);
+    WaitingMessage waitingMessage = new WaitingMessage(message, from);
     waitingMessages.add(waitingMessage);
     deliverHeadIfNeeded(); // Useful for a group of 2 peers.
   }
@@ -92,23 +89,23 @@ public class MessageManager implements DeliverCallback {
    * 
    * @param ack
    *          : The AckMessage received.
-   * @param address
+   * @param from
    *          : The address from which the ACK has been sent.
    */
-  private void treatAck(AckMessage ack, InetSocketAddress address) {
+  private void treatAck(AckMessage ack, InetSocketAddress from) {
     peer.updateLogicalClock(ack.getLogicalClock());
     boolean foundInQueue = false;
     for (WaitingMessage waitingMessage : waitingMessages) {
       if (waitingMessage.getLogicalClock() == ack.getLogicalClockAuthor()
-          && waitingMessage.getAuthor().equals(ack.getAuthorOfAckedMessage())) {
-        waitingMessage.addAck(address, ack);
+          && waitingMessage.getAuthor().equals(ack.getAuthor())) {
+        waitingMessage.addAck(from, ack);
         foundInQueue = true;
         deliverHeadIfNeeded();
         break;
       }
     }
     if (!foundInQueue) {
-      WaitingMessage waitingMessage = new WaitingMessage(ack, ack.getAuthor());
+      WaitingMessage waitingMessage = new WaitingMessage(ack, from);
       waitingMessages.add(waitingMessage);
     }
   }
@@ -143,4 +140,5 @@ public class MessageManager implements DeliverCallback {
     // Only for the situation where the group size is 1:
     deliverHeadIfNeeded();
   }
+
 }

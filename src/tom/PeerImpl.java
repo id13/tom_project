@@ -1,16 +1,12 @@
 package tom;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.Set;
 
-import messages.engine.AcceptCallback;
-import messages.engine.Channel;
-import messages.engine.ConnectCallback;
+import messages.callbacks.AcceptCallback;
+import messages.callbacks.ConnectCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.NioEngine;
-import messages.engine.Server;
 
 public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 
@@ -49,7 +45,7 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   @Override
   public void send(String content) {
     int lc = updateLogicalClock(0);
-    Message message = new Message(lc, Message.MESSAGE, myAddress, content);
+    Message message = new Message(lc, Message.MESSAGE, content);
     messageManager.treatMyMessage(message);
     messenger.broadcast(message.getFullMessage());
   }
@@ -71,14 +67,14 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   }
 
   @Override
-  public void closed(Channel channel) {
-    this.distantPeerManager.removeChannel(channel);
-
+  public void closed(InetSocketAddress address) {
+    this.distantPeerManager.removeMember(address);
   }
 
   @Override
-  public void connected(Channel channel) {
-    distantPeerManager.addChannel(channel);
+  public void connected(InetSocketAddress address) {
+    System.out.println("[TOM] Connected to " + address);
+    distantPeerManager.addMember(address);
   }
 
   @Override
@@ -87,8 +83,9 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   }
 
   @Override
-  public void accepted(Server server, Channel channel) {
-    distantPeerManager.addChannel(channel);
+  public void accepted(InetSocketAddress address) {
+    System.out.println("[TOM] Accepted " + address);
+    distantPeerManager.addMember(address);
   }
 
   @Override

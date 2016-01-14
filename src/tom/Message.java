@@ -1,8 +1,5 @@
 package tom;
 
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
 import messages.engine.Engine;
 import messages.util.ByteUtil;
 
@@ -15,7 +12,6 @@ public class Message {
   private int logicalClock;
   private byte messageType;
   private String content;
-  private InetSocketAddress author;
 
   /**
    * Create a message providing its headers and its content.
@@ -23,12 +19,10 @@ public class Message {
    * @param logicalClock
    * @param messageType
    * @param content
-   * @param author
    */
-  public Message(int logicalClock, byte messageType, InetSocketAddress author, String content) {
+  public Message(int logicalClock, byte messageType, String content) {
     this.logicalClock = logicalClock;
     this.messageType = messageType;
-    this.author = author;
     this.content = content;
   }
 
@@ -39,19 +33,14 @@ public class Message {
    * @param fullMessage
    */
   public static Message getMessageReceived(byte[] bytes) {
-    if (bytes.length < 13) {
+    if (bytes.length < 5) {
       Engine.panic("This messages is to short so it can not have headers.");
     }
     int logicalClock = ByteUtil.readInt32(bytes, 0);
     byte messageType = bytes[4];
-    InetSocketAddress author = null;
-    try {
-      author = ByteUtil.readInetSocketAddress(bytes, 5);
-    } catch (UnknownHostException e) {
-      Engine.panic("The received message is malformed.");
-    }
-    String content = ByteUtil.readString(bytes).substring(13);
-    Message message = new Message(logicalClock, messageType, author, content);
+    String content = ByteUtil.readString(bytes).substring(5); // TODO: verify
+                                                              // that
+    Message message = new Message(logicalClock, messageType, content);
     if (messageType == ACK) {
       AckMessage messageAck = new AckMessage(message);
       return messageAck;
@@ -66,11 +55,10 @@ public class Message {
    *         content.
    */
   public byte[] getFullMessage() {
-    byte[] bytes = new byte[13 + content.length()];
+    byte[] bytes = new byte[5 + content.length()];
     ByteUtil.writeInt32(bytes, 0, logicalClock);
     bytes[4] = messageType;
-    ByteUtil.writeInetSocketAddress(bytes, 5, author);
-    System.arraycopy(ByteUtil.writeString(content), 0, bytes, 13, content.length());
+    System.arraycopy(ByteUtil.writeString(content), 0, bytes, 5, content.length());
     return bytes;
   }
 
@@ -102,11 +90,6 @@ public class Message {
 
   @Override
   public String toString() {
-    return "Message: LC: " + logicalClock + "; Author: " + author + "; Type: " + messageType + "; content: " + content;
+    return "Message: LC: " + logicalClock + "; Type: " + messageType + "; content: " + content;
   }
-
-  public InetSocketAddress getAuthor() {
-    return author;
-  }
-
 }

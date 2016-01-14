@@ -72,7 +72,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    *          The author of the ACK.
    */
   public WaitingMessage(AckMessage ack, InetSocketAddress address) {
-    this.author = ack.getAuthorOfAckedMessage();
+    this.author = ack.getAuthor();
     this.logicalClock = ack.getLogicalClockAuthor();
     this.receivedAck.add(address);
     this.crc = ack.getCrc32();

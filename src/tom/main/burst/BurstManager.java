@@ -1,26 +1,19 @@
 package tom.main.burst;
 
-import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
+
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import messages.engine.AcceptCallback;
-import messages.engine.Channel;
-import messages.engine.ConnectCallback;
-import messages.engine.DeliverCallback;
+import messages.callbacks.AcceptCallback;
+import messages.callbacks.ConnectCallback;
+import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.NioEngine;
-import messages.engine.Server;
 
 public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback {
 
@@ -90,15 +83,10 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   }
 
   @Override
-  public void deliver(Channel channel, byte[] bytes) {
-    try {
-      LinkedList<String> messages = this.messagesToChek.get(channel.getRemoteAddress());
-      messages.add(new String(bytes));
-      this.messagesToChek.put(channel.getRemoteAddress(), messages);
-    } catch (IOException e) {
-      e.printStackTrace();
-      Engine.panic(e.getMessage());
-    }
+  public void delivered(InetSocketAddress from, byte[] content) {
+    LinkedList<String> messages = this.messagesToChek.get(from);
+    messages.add(new String(content));
+    this.messagesToChek.put(from, messages);
     this.checkMessages();
   }
 
@@ -107,12 +95,13 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   }
 
   @Override
-  public void closed(Channel channel) {
+  public void closed(InetSocketAddress address) {
     this.messenger.closeAllConnections();
     Engine.panic("a member left the group");
   }
 
   public void startBursting() {
+    System.out.println("Start Bursting");
     BurstManager manager = this;
     Runnable burstLoop = new Runnable() {
       @Override
@@ -138,22 +127,17 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   }
 
   @Override
-  public void connected(Channel channel) {
-    try {
-      this.slaves.add(channel.getRemoteAddress());
-      this.slavesToConnect.remove(channel.getRemoteAddress());
-    } catch (IOException e) {
-      e.printStackTrace();
-      Engine.panic(e.getMessage());
-    }
+  public void connected(InetSocketAddress address) {
+    System.out.println("Connected to " + address);
+    this.slaves.add(address);
+    this.slavesToConnect.remove(address);
     if (this.slavesToConnect.isEmpty())
       this.startBursting();
   }
 
   @Override
-  public void accepted(Server server, Channel channel) {
-    // XXX Auto-generated method stub
-
+  public void accepted(InetSocketAddress address) {
+    System.out.println("Accepted " + address);
   }
 
 }
