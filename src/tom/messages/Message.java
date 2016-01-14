@@ -1,5 +1,7 @@
 package tom.messages;
 
+import java.util.Arrays;
+
 import messages.engine.Engine;
 import messages.util.ByteUtil;
 
@@ -41,8 +43,7 @@ public class Message {
     }
     int logicalClock = ByteUtil.readInt32(bytes, 0);
     byte messageType = bytes[4];
-    String content = ByteUtil.readString(bytes).substring(5); // TODO: verify
-                                                              // that
+    String content = ByteUtil.readString(Arrays.copyOfRange(bytes, 5, bytes.length));
     Message message = new Message(logicalClock, messageType, content);
     switch (messageType) {
     case MESSAGE:
