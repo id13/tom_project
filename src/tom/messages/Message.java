@@ -50,8 +50,7 @@ public class Message {
     case ACK:
       return new AckMessage(message);
     case JOIN:
-      // TODO
-      return null;
+      return new JoinMessage(message);
     case JOIN_REQUEST:
       return new JoinRequestMessage();
     case JOIN_RESPONSE:
