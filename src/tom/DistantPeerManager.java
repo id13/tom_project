@@ -37,4 +37,8 @@ public class DistantPeerManager {
   public void removeMember(InetSocketAddress member) {
     group.remove(member);
   }
+
+  public Set<InetSocketAddress> getGroup() {
+    return group;
+  }
 }

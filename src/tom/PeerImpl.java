@@ -48,7 +48,6 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
     int lc = updateLogicalClock(0);
     Message message = new Message(lc, Message.MESSAGE, content);
     messageManager.treatMyMessage(message);
-    messenger.broadcast(message.getFullMessage());
   }
 
   @Override

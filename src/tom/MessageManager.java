@@ -2,6 +2,7 @@ package tom;
 
 import java.net.InetSocketAddress;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
@@ -69,7 +70,7 @@ public class MessageManager implements DeliverCallback {
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (messenger != null) { // Useful in JUnitTest
-      messenger.broadcast(ourAck.getFullMessage());
+      sendToGroup(ourAck);
     }
     for (WaitingMessage waitingMessage : waitingMessages) {
       if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
@@ -139,8 +140,15 @@ public class MessageManager implements DeliverCallback {
   public void treatMyMessage(Message message) {
     WaitingMessage waitingMessage = new WaitingMessage(message, peer);
     waitingMessages.add(waitingMessage);
+    sendToGroup(message);
     // Only for the situation where the group size is 1:
     deliverHeadIfNeeded();
   }
 
+  public void sendToGroup(Message message) {
+    messenger.broadcast(message.getFullMessage());
+/*    Set<InetSocketAddress> group = distantPeerManager.getGroup();
+    for (InetSocketAddress member : group) {
+    }*/
+  }
 }
