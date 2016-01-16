@@ -72,7 +72,9 @@ public class MessageManager implements DeliverCallback {
 
   private void updateWaitingMessages(Message message, InetSocketAddress from, int ackLogicalClock) {
     for (WaitingMessage waitingMessage : waitingMessages) {
-      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
+      if (waitingMessage.getLogicalClock() == message.getLogicalClock() 
+          && waitingMessage.getAuthor().equals(from) 
+          && waitingMessage.getContent() == null) {
         waitingMessage.addMessage(from, message);
         waitingMessage.setAckLogicalClock(ackLogicalClock);
         deliverHeadIfNeeded();
