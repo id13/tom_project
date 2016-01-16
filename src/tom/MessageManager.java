@@ -223,6 +223,7 @@ public class MessageManager implements DeliverCallback {
     for (InetSocketAddress member : group) {
       messenger.send(member, message.getFullMessage());
     }
+    deliverHeadIfNeeded();
   }
 
   public void checkAndUpdatePendingAcks(InetSocketAddress newMember) {
