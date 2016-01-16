@@ -34,7 +34,7 @@ public class AckMessage extends Message {
    */
   public AckMessage(Message messageToAck, InetSocketAddress author, int myLogicalClock) {
     super(myLogicalClock, Message.ACK, "completed later with setContent");
-    if (messageToAck.getMessageType() != Message.MESSAGE) {
+    if (messageToAck.getMessageType() != Message.MESSAGE && messageToAck.getMessageType() != Message.JOIN) {
       Engine.panic("Builder MessageAck incorrectly used");
     }
     byte[] contentAck = new byte[20];

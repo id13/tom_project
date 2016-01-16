@@ -187,9 +187,12 @@ public class MessageManager implements DeliverCallback {
           InetSocketAddress newMember = joinMessage.getNewMember();
           this.distantPeerManager.removeWaitingMember(newMember);
           this.distantPeerManager.addMember(newMember);
+          if (this.distantPeerManager.getMembersToIntroduce().contains(newMember)) {
+            this.distantPeerManager.removeMemberToIntroduce(newMember);
+            this.sendWelcome(waitingMessage.getLogicalClock(), newMember);            
+          }
           this.sendMissingMessages(newMember);
           this.notifyNewMember(newMember);
-          this.sendWelcome(waitingMessage.getLogicalClock(), newMember);
         } else {
           return;
         }
@@ -230,6 +233,7 @@ public class MessageManager implements DeliverCallback {
     AckMessage ack = this.pendingAcks.get(newMember);
     if (ack != null) {
       this.pendingAcks.remove(newMember);
+      sendToGroup(ack);
       this.deliverHeadIfNeeded();
     }
   }
@@ -255,7 +259,7 @@ public class MessageManager implements DeliverCallback {
   private void sendJoin(InetSocketAddress address) {
     int clock = peer.updateLogicalClock(0);
     JoinMessage message = new JoinMessage(clock, address);
-    this.sendToGroup(message);
+    this.treatMyMessage(message);
   }
 
   private void handleJoinRequest(JoinRequestMessage message, InetSocketAddress from) {

@@ -26,7 +26,6 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
   private int ackLogicalClock;
   private Set<InetSocketAddress> receivedAck = new HashSet<>();
 
-  
   /**
    * @return the ackLogicalClock
    */
@@ -35,12 +34,13 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
   }
 
   /**
-   * @param ackLogicalClock the ackLogicalClock to set
+   * @param ackLogicalClock
+   *          the ackLogicalClock to set
    */
   public void setAckLogicalClock(int ackLogicalClock) {
     this.ackLogicalClock = ackLogicalClock;
   }
-  
+
   /**
    * Build a waiting message from a Message received. This method automatically
    * adds the address to the set.
@@ -51,7 +51,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    *          the InetSocketAddress from which this message has been received.
    */
   public WaitingMessage(Message message, InetSocketAddress author) {
-    if (message.getMessageType() == Message.MESSAGE) {
+    if (message.getMessageType() == Message.MESSAGE || message.getMessageType() == Message.JOIN) {
       this.content = message;
       this.logicalClock = message.getLogicalClock();
       this.author = author;
@@ -61,7 +61,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
     }
     receivedAck.add(author);
   }
-  
+
   /**
    * Build a waiting message from a Message that we are sending.
    * 
@@ -71,7 +71,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    *          The peer sending the message.
    */
   public WaitingMessage(Message message, Peer peer) {
-    if (message.getMessageType() == Message.MESSAGE) {
+    if (message.getMessageType() == Message.MESSAGE || message.getMessageType() == Message.JOIN) {
       this.content = message;
       this.logicalClock = message.getLogicalClock();
       this.author = peer.getMyAddress();
