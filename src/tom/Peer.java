@@ -8,14 +8,14 @@ import java.util.Set;
 public interface Peer {
 
   /**
-   * Connect the Manager of the Peer to the corresponding address.
+   * Connect the Peer to a group.
    * 
-   * @param address the address to connect.
+   * @param address the address of one of the group members.
    * @throws IOException 
    * @throws SecurityException 
    * @throws UnknownHostException 
    */
-  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException;
+  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException, ConnectException;
 
   /**
    * Send a String to the other members of the group.

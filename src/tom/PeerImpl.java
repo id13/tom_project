@@ -18,6 +18,7 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   private int logicalClock = 0;
   private final InetSocketAddress myAddress;
   private final DistantPeerManager distantPeerManager;
+  private final TomJoinCallback joinCallback;
 
   /**
    * This builder initiates a Peer. So, it initiates a NioEngine, a Messenger
@@ -28,12 +29,13 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
    * @param callback:
    *          The callback used to display delivered messages.
    */
-  public PeerImpl(InetSocketAddress myAddress, TomDeliverCallback callback) {
+  public PeerImpl(InetSocketAddress myAddress, TomDeliverCallback deliver, TomJoinCallback join) {
     this.myAddress = myAddress;
     this.distantPeerManager = new DistantPeerManager();
+    this.joinCallback = join;
     NioEngine engine = NioEngine.getNioEngine();
     this.messenger = new Messenger(engine, myAddress.getPort());
-    this.messageManager = new MessageManager(this, callback, messenger, distantPeerManager);
+    this.messageManager = new MessageManager(this, deliver, messenger, distantPeerManager);
     this.messenger.setDeliverCallback(messageManager);
     this.messenger.setConnectCallback(this);
     this.messenger.setAcceptCallback(this);
@@ -53,7 +55,7 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   }
 
   @Override
-  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException {
+  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException, ConnectException {
     messenger.connect(address.getAddress(), address.getPort());
   }
 
