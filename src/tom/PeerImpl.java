@@ -87,7 +87,8 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   @Override
   public void accepted(InetSocketAddress address) {
     System.out.println("[TOM] Accepted " + address);
-    distantPeerManager.addMember(address);
+    distantPeerManager.addWaitingMember(address);
+    this.messageManager.checkAndUpdatePendingAcks(address);
   }
 
   @Override
