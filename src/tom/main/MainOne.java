@@ -1,6 +1,5 @@
 package tom.main;
 
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -25,6 +24,6 @@ public class MainOne {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    Peer peer1 = new PeerImpl(myAddress, callback1);
+    Peer peer1 = new PeerImpl(myAddress, callback1, callback1);
   }
 }

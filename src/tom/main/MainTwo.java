@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import messages.engine.Engine;
 import messages.engine.NioEngine;
 import tom.Peer;
 import tom.PeerImpl;
@@ -25,8 +26,12 @@ public class MainTwo {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    Peer peer2 = new PeerImpl(myAddress, callback2);
-    peer2.connect(new InetSocketAddress(myIpAddress, 12380));
+    Peer peer2 = new PeerImpl(myAddress, callback2, callback2);
+    try {
+      peer2.connect(new InetSocketAddress(myIpAddress, 12380));
+    } catch (tom.ConnectException e) {
+      Engine.panic(e.getMessage());
+    }
   }
 
 }

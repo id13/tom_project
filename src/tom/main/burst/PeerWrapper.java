@@ -10,11 +10,13 @@ import messages.callbacks.ConnectCallback;
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
+import tom.ConnectException;
 import tom.Peer;
 import tom.PeerImpl;
 import tom.TomDeliverCallback;
+import tom.TomJoinCallback;
 
-public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCallback, TomDeliverCallback {
+public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCallback, TomDeliverCallback, TomJoinCallback{
 
   Messenger messenger;
   Peer peer;
@@ -22,7 +24,7 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   public PeerWrapper(Messenger messenger, InetSocketAddress peerAddress, List<InetSocketAddress> addressesToConnect) {
     this.messenger = messenger;
-    this.peer = new PeerImpl(peerAddress, this);
+    this.peer = new PeerImpl(peerAddress, this, this);
     this.addressesToConnect = addressesToConnect;
     messenger.setAcceptCallback(this);
     messenger.setClosedCallback(this);
@@ -43,7 +45,7 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
     for (InetSocketAddress distantPeer : this.addressesToConnect) {
       try {
         peer.connect(distantPeer);
-      } catch (SecurityException | IOException e) {
+      } catch (SecurityException | IOException | ConnectException e) {
         e.printStackTrace();
         Engine.panic(e.getMessage());
       }
@@ -64,5 +66,10 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   @Override
   public void connected(InetSocketAddress address) {
     System.out.println("Connected to " + address);
+  }
+
+  @Override
+  public void joined(Peer peer) {
+    System.out.println("Joined.");
   }
 }

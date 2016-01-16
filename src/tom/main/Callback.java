@@ -2,9 +2,11 @@ package tom.main;
 
 import java.net.InetSocketAddress;
 
+import tom.Peer;
 import tom.TomDeliverCallback;
+import tom.TomJoinCallback;
 
-public class Callback implements TomDeliverCallback {
+public class Callback implements TomDeliverCallback, TomJoinCallback {
 
   private String name;
 
@@ -17,4 +19,10 @@ public class Callback implements TomDeliverCallback {
     System.out.println("Delivered by TOM layer from " + from.toString() + " : " + message);
 
   }
+
+  @Override
+  public void joined(Peer peer) {
+    System.out.println("Joined.");
+  }
+
 }
