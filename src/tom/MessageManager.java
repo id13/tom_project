@@ -3,7 +3,6 @@ package tom;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -24,6 +23,7 @@ import tom.messages.Message;
 public class MessageManager implements DeliverCallback {
 
   private PriorityQueue<WaitingMessage> waitingMessages = new PriorityQueue<>();
+  private Map<InetSocketAddress, AckMessage> pendingAcks = new HashMap<>();
   private final Peer peer;
   private final TomDeliverCallback tomDeliverCallback;
   private final Messenger messenger;
@@ -50,11 +50,24 @@ public class MessageManager implements DeliverCallback {
     System.out.println("Received message (not delivered) from " + from + " : " + message);
     if (message instanceof AckMessage) {
       treatAck((AckMessage) message, from);
+    } else if(message instanceof JoinMessage) {
+      this.handleJoinMessage((JoinMessage) message, from);
     } else if (message instanceof Message) {
       treatMessage(message, from);
     } else {
       Engine.panic("Unknown message type");
     }
+  }
+  
+  public void handleJoinMessage(JoinMessage message, InetSocketAddress from) {
+    int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
+    AckMessage ourAck = new AckMessage(message, from, logicalClock);
+    if(this.distantPeerManager.isWaiting(message.getNewMember())) {
+      sendToGroup(ourAck);
+    } else {
+      this.pendingAcks.put(message.getNewMember(), ourAck);
+    }
+    this.updateWaitingMessages(message, from);
   }
 
   public void updateWaitingMessages(Message message, InetSocketAddress from) {
@@ -85,19 +98,19 @@ public class MessageManager implements DeliverCallback {
   private void treatMessage(Message message, InetSocketAddress from) {
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
-    if (messenger != null) { // Useful in JUnitTest
-      sendToGroup(ourAck);
-    }
-    for (WaitingMessage waitingMessage : waitingMessages) {
-      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
-        waitingMessage.addMessage(from, message);
-        deliverHeadIfNeeded();
-        return;
+    if (messenger != null) { // Useful for JUnit
+      if(message instanceof JoinMessage) {
+        JoinMessage joinMessage = (JoinMessage) message;
+        if(this.distantPeerManager.isWaiting(joinMessage.getNewMember())) {
+          sendToGroup(ourAck);
+        } else {
+          this.pendingAcks.put(joinMessage.getNewMember(), ourAck);
+        }
+      } else {
+        sendToGroup(ourAck);  
       }
     }
-    WaitingMessage waitingMessage = new WaitingMessage(message, from);
-    waitingMessages.add(waitingMessage);
-    deliverHeadIfNeeded(); // Useful for a group of 2 peers.
+    this.updateWaitingMessages(message, from);
   }
 
   /**
@@ -138,7 +151,20 @@ public class MessageManager implements DeliverCallback {
   private void deliverHeadIfNeeded() {
     WaitingMessage waitingMessage = waitingMessages.peek();
     while (waitingMessage != null && distantPeerManager.allAckReceived(waitingMessage)) {
-      waitingMessages.remove();
+      if(waitingMessage.getContent() instanceof JoinMessage) {
+        JoinMessage joinMessage = (JoinMessage) waitingMessage.getContent();
+        AckMessage ack = this.pendingAcks.get(joinMessage.getNewMember());
+        if(ack == null) {
+          waitingMessages.remove();
+          this.distantPeerManager.removeWaitingMember(joinMessage.getNewMember());
+          this.distantPeerManager.addMember(joinMessage.getNewMember());
+          this.sendMissingOwnMessages(joinMessage.getNewMember());          
+        } else {
+          return;
+        }
+      } else {
+        waitingMessages.remove();
+      }
       System.out.println("delivered " + waitingMessage.getContent() + " from " + waitingMessage.getAuthor().toString());
       tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent().getContent());
       waitingMessage = waitingMessages.peek();
@@ -167,4 +193,27 @@ public class MessageManager implements DeliverCallback {
       messenger.send(member, message.getFullMessage());
     }
   }
+  
+  public void checkAndUpdatePendingAcks(InetSocketAddress newMember) {
+    AckMessage ack = this.pendingAcks.get(newMember);
+    if(ack != null) {
+      this.pendingAcks.remove(newMember);
+      this.deliverHeadIfNeeded();
+    }
+  }
+  
+  public void sendMissingOwnMessages(InetSocketAddress newMember) {
+    for(WaitingMessage waitingMessage : this.waitingMessages) {
+      if(waitingMessage.getAuthor().equals(this.peer.getMyAddress())) {
+        this.messenger.send(newMember, waitingMessage.getContent().getFullMessage());
+      }
+    }
+  }
+  
+  public void sendJoin(InetSocketAddress address) {
+    int clock = peer.updateLogicalClock(0);
+    JoinMessage message = new JoinMessage(clock, address);
+    this.sendToGroup(message);
+  }
+  
 }
