@@ -57,6 +57,19 @@ public class MessageManager implements DeliverCallback {
     }
   }
 
+  public void updateWaitingMessages(Message message, InetSocketAddress from) {
+    for (WaitingMessage waitingMessage : waitingMessages) {
+      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
+        waitingMessage.addMessage(from, message);
+        deliverHeadIfNeeded();
+        return;
+      }
+    }
+    WaitingMessage waitingMessage = new WaitingMessage(message, from);
+    waitingMessages.add(waitingMessage);
+    deliverHeadIfNeeded(); // Useful for a group of 2 peers.    
+  }
+  
   /**
    * This method treats a received message of type TYPE_MESSAGE. So, it adds it
    * looks into the Set of earlyAck to look for a ACK corresponding to this
