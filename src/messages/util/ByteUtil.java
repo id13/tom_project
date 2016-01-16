@@ -81,11 +81,16 @@ public class ByteUtil {
     }
   }
 
-  static public void writeInetSocketAddress(byte[] bytes, int offset, InetSocketAddress address) {
+  static public void writeInetSocketAddress(byte[] bytes, int offset, InetSocketAddress address) throws UnknownHostException {
     if (address.isUnresolved()) {
       throw new UnresolvedAddressException();
     }
-    byte[] ipv4 = address.getAddress().getAddress();
+    byte[] ipv4;
+    if (address.getAddress().isLoopbackAddress()) {
+      ipv4 = InetAddress.getByName("localhost").getAddress();
+    } else {
+      ipv4 = address.getAddress().getAddress();
+    }
     assert (ipv4.length == 4);
     int port = address.getPort();
     System.arraycopy(ipv4, 0, bytes, offset, 4);
@@ -96,7 +101,10 @@ public class ByteUtil {
     byte[] ipv4 = new byte[4];
     System.arraycopy(bytes, offset, ipv4, 0, 4);
     int port = readInt32(bytes, offset + 4);
+    // This seems dirty, but it aims at addressing the inet loopback problem.
     InetAddress addr = InetAddress.getByAddress(ipv4);
+    if(addr.equals(InetAddress.getLocalHost()))
+      addr = InetAddress.getLoopbackAddress();
     return new InetSocketAddress(addr, port);
   }
 

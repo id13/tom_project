@@ -1,5 +1,6 @@
 package tom.main.burst;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,12 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
     System.out.println("Accepted " + address);
 
     for (InetSocketAddress distantPeer : this.addressesToConnect) {
-      peer.connect(distantPeer);
+      try {
+        peer.connect(distantPeer);
+      } catch (SecurityException | IOException e) {
+        e.printStackTrace();
+        Engine.panic(e.getMessage());
+      }
     }
   }
 
@@ -51,9 +57,8 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   @Override
   public void deliver(InetSocketAddress from, String message) {
-
     messenger.broadcast(
-        (message + " from " + Arrays.toString(from.getAddress().getAddress()) + ':' + from.getPort()).getBytes());
+        (message + " from " + from.getAddress().getHostAddress() + ':' + from.getPort()).getBytes());
   }
 
   @Override

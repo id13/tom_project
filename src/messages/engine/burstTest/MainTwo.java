@@ -1,5 +1,7 @@
 package messages.engine.burstTest;
 
+import java.net.InetAddress;
+
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
@@ -26,7 +28,8 @@ public class MainTwo {
     messenger.setDeliverCallback(callback);    
     try {
       messenger.accept();
-      messenger.connect("localhost", 43124);
+      InetAddress myAddress = InetAddress.getLoopbackAddress();
+      messenger.connect(myAddress, 43124);
       messenger.runBurstBroadcastThread("hello !");
     } catch (Exception ex) {
       messenger.closeAllConnections();

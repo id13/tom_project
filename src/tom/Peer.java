@@ -1,6 +1,8 @@
 package tom;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Set;
 
 public interface Peer {
@@ -8,10 +10,12 @@ public interface Peer {
   /**
    * Connect the Manager of the Peer to the corresponding address.
    * 
-   * @param address:
-   *          The address to connect.
+   * @param address the address to connect.
+   * @throws IOException 
+   * @throws SecurityException 
+   * @throws UnknownHostException 
    */
-  public void connect(InetSocketAddress address);
+  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException;
 
   /**
    * Send a String to the other members of the group.

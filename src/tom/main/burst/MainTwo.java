@@ -1,5 +1,7 @@
 package tom.main.burst;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +19,10 @@ public class MainTwo {
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    InetSocketAddress myAddress = new InetSocketAddress("localhost", 12381);
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
+    InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12381);
     List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();
-    addressesToConnect.add(new InetSocketAddress("localhost", 12380));
+    addressesToConnect.add(new InetSocketAddress(myIpAddress, 12380));
     Messenger messenger = new Messenger(engine, 22381);
     PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);
   }

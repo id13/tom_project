@@ -108,15 +108,8 @@ public class Messenger implements AcceptCallback, ConnectCallback, DeliverCallba
     }
   }
 
-  public void connect(String hostname, int port) {
-    InetAddress address;
-    try {
-      address = InetAddress.getByName(hostname);
+  public void connect(InetAddress address, int port) throws UnknownHostException, SecurityException, IOException {
       this.engine.connect(address, port, this);
-    } catch (SecurityException | IOException e) {
-      e.printStackTrace();
-      Engine.panic(e.getMessage());
-    }
   }
 
   public void stopAccept() {

@@ -1,6 +1,8 @@
 package tom;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 import messages.callbacks.AcceptCallback;
 import messages.callbacks.ConnectCallback;
@@ -51,8 +53,8 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   }
 
   @Override
-  public void connect(InetSocketAddress address) {
-    messenger.connect(address.getHostName(), address.getPort());
+  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException {
+    messenger.connect(address.getAddress(), address.getPort());
   }
 
   @Override

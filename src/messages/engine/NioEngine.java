@@ -1,6 +1,7 @@
 package messages.engine;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -124,8 +125,9 @@ public class NioEngine extends Engine {
   @Override
   public Server listen(int port, AcceptCallback callback) throws IOException {
     ServerSocketChannel socket = ServerSocketChannel.open();
+    InetAddress address = null;
     socket.configureBlocking(false);
-    InetSocketAddress isa = new InetSocketAddress("localhost", port);
+    InetSocketAddress isa = new InetSocketAddress(address, port);
     socket.bind(isa);
     return new NioServer(port, socket, this.register(socket, callback, SelectionKey.OP_ACCEPT));
   }

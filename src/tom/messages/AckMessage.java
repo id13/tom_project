@@ -42,7 +42,12 @@ public class AckMessage extends Message {
     this.author = author;
     this.crc32 = ByteUtil.computeCRC32(ByteUtil.writeString(messageToAck.getContent()));
     ByteUtil.writeInt32(contentAck, 0, this.logicalClockAuthor);
-    ByteUtil.writeInetSocketAddress(contentAck, 4, author);
+    try {
+      ByteUtil.writeInetSocketAddress(contentAck, 4, author);
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
     ByteUtil.writeLong64(contentAck, 12, this.crc32);
     this.setContent(ByteUtil.readString(contentAck));
   }

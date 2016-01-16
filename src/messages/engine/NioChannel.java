@@ -89,7 +89,12 @@ public class NioChannel extends Channel implements ReceiveCallback, WriteCallbac
 
   public void sendHello(InetSocketAddress address) {
     byte[] content = new byte[8];
-    ByteUtil.writeInetSocketAddress(content, 0, address);
+    try {
+      ByteUtil.writeInetSocketAddress(content, 0, address);
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
     this.send(content, 0, 8, HELLO);
   }
   

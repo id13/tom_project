@@ -19,7 +19,12 @@ public class JoinResponseMessage extends Message {
     int i = 4;
     for (InetSocketAddress member : group) {
       this.group.add(member);
-      ByteUtil.writeInetSocketAddress(content, i, member);
+      try {
+        ByteUtil.writeInetSocketAddress(content, i, member);
+      } catch (UnknownHostException e) {
+        e.printStackTrace();
+        Engine.panic(e.getMessage());
+      }
       i += 8;
     }
     super.setContent(ByteUtil.readString(content));

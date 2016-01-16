@@ -1,5 +1,6 @@
 package tom.main;
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -11,10 +12,10 @@ import tom.PeerImpl;
 
 public class MainTwo {
 
-  public static void main(String[] args) throws UnknownHostException {
+  public static void main(String[] args) throws SecurityException, IOException {
     System.setProperty("java.net.preferIPv4Stack", "true");
     Callback callback2 = new Callback("peer2");
-    InetAddress myIpAddress = Inet4Address.getLocalHost();
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
     InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12381);
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
@@ -25,7 +26,7 @@ public class MainTwo {
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
     Peer peer2 = new PeerImpl(myAddress, callback2);
-    peer2.connect(new InetSocketAddress("localhost", 12380));
+    peer2.connect(new InetSocketAddress(myIpAddress, 12380));
   }
 
 }

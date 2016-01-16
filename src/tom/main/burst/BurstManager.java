@@ -1,7 +1,11 @@
 package tom.main.burst;
 
 
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -28,7 +32,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     this.messagesToChek = new HashMap<InetSocketAddress, LinkedList<String>>();
   }
 
-  public void createMessenger(Set<InetSocketAddress> slavesToConnect) {
+  public void createMessenger(Set<InetSocketAddress> slavesToConnect) throws UnknownHostException, SecurityException, IOException {
     this.slavesToConnect = slavesToConnect;
     this.messenger = new Messenger(NioEngine.getNioEngine(), this.port);
     this.messenger.setConnectCallback(this);
@@ -36,12 +40,12 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     this.messenger.setDeliverCallback(this);
     messenger.accept();
     for (InetSocketAddress slaveToConnect : this.slavesToConnect) {
-      this.messenger.connect("localhost", slaveToConnect.getPort());
-      this.messagesToChek.put(new InetSocketAddress("localhost", slaveToConnect.getPort()), new LinkedList<String>());
+      this.messenger.connect(slaveToConnect.getAddress(), slaveToConnect.getPort());
+      this.messagesToChek.put(new InetSocketAddress(slaveToConnect.getAddress(), slaveToConnect.getPort()), new LinkedList<String>());
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws UnknownHostException, SecurityException, IOException {
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {
       @Override
@@ -52,10 +56,11 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
     BurstManager manager = new BurstManager(22379);
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
     Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();
-    addressesToConnect.add(new InetSocketAddress("localhost", 22380));
-    addressesToConnect.add(new InetSocketAddress("localhost", 22381));
-    addressesToConnect.add(new InetSocketAddress("localhost", 22382));
+    addressesToConnect.add(new InetSocketAddress(myIpAddress, 22380));
+    addressesToConnect.add(new InetSocketAddress(myIpAddress, 22381));
+    addressesToConnect.add(new InetSocketAddress(myIpAddress, 22382));
     manager.createMessenger(addressesToConnect);
 
   }
@@ -111,7 +116,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
           try {
             // On my computer, this is the limit value, bellow that, the tom
             // layer begins to fall apart
-            Thread.currentThread().sleep(60);
+            Thread.currentThread().sleep(1);
           } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();

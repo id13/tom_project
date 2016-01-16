@@ -15,7 +15,7 @@ public class MainOne {
 
     System.setProperty("java.net.preferIPv4Stack", "true");
     Callback callback1 = new Callback("peer1");
-    InetAddress myIpAddress = Inet4Address.getLocalHost();
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
     InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12380);
     NioEngine engine = NioEngine.getNioEngine();
     Runnable engineLoop = new Runnable() {

@@ -14,7 +14,12 @@ public class JoinMessage extends Message {
     super(logicalClock, Message.JOIN, "completed later with setContent");
     this.newMember = newMember;
     byte[] content = new byte[8];
-    ByteUtil.writeInetSocketAddress(content, 0, newMember);
+    try {
+      ByteUtil.writeInetSocketAddress(content, 0, newMember);
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
     super.setContent(ByteUtil.readString(content));
   }
   
