@@ -88,10 +88,20 @@ public class MessageManager implements DeliverCallback {
     this.updateWaitingMessages(message, from, logicalClock);
   }
 
+  /**
+   * This method is called when a message (of type Message or Join) is received.
+   * This method add the message to the waiting messages. To do that, we look if
+   * a waiting message already exist. If a waiting message already exist, that
+   * means that we already received one of the ACK of this message and so we
+   * mustn't create a new waiting message.
+   * 
+   * @param message
+   * @param from
+   * @param ackLogicalClock
+   */
   private void updateWaitingMessages(Message message, InetSocketAddress from, int ackLogicalClock) {
     for (WaitingMessage waitingMessage : waitingMessages) {
-      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)
-          && waitingMessage.getContent() == null) {
+      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
         waitingMessage.addMessage(from, message);
         waitingMessage.setAckLogicalClock(ackLogicalClock);
         deliverHeadIfNeeded();
@@ -307,8 +317,8 @@ public class MessageManager implements DeliverCallback {
    * This bean is used to store a message and its origin when we receive a
    * Message before to be in a group. This situation can happened just after the
    * delivery of a Join in a group. At this moment, the new member can sometimes
-   * receive the retransmitted messages before to receive his welcome. So he
-   * has to receive the welcome before to handle these messages.
+   * receive the retransmitted messages before to receive his welcome. So he has
+   * to receive the welcome before to handle these messages.
    *
    */
   private class InGroupMessage {
