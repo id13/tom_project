@@ -42,7 +42,7 @@ public interface Peer {
    * logical clock of the peer.
    * 
    * @param outsideLogicalClock
-   *          : the author's logical clock of the just received messages.
+   *          : the author's logical clock of the received messages.
    * @return the new logical clock.
    */
   int updateLogicalClock(int outsideLogicalClock);

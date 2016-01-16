@@ -44,11 +44,10 @@ public class MessageManager implements DeliverCallback {
   public void delivered(InetSocketAddress from, byte[] content) {
     Message message = Message.getMessageReceived(content);
     System.out.println("Received message (not delivered) from " + from + " : " + message);
-
-    if (message.getMessageType() == Message.MESSAGE) {
-      treatMessage(message, from);
-    } else if (message.getMessageType() == Message.ACK) {
+    if (message instanceof AckMessage) {
       treatAck((AckMessage) message, from);
+    } else if (message instanceof Message) {
+      treatMessage(message, from);
     } else {
       Engine.panic("Unknown message type");
     }
@@ -146,9 +145,9 @@ public class MessageManager implements DeliverCallback {
   }
 
   public void sendToGroup(Message message) {
-    messenger.broadcast(message.getFullMessage());
-/*    Set<InetSocketAddress> group = distantPeerManager.getGroup();
+    Set<InetSocketAddress> group = distantPeerManager.getGroup();
     for (InetSocketAddress member : group) {
-    }*/
+      messenger.send(member, message.getFullMessage());
+    }
   }
 }
