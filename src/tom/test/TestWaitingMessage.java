@@ -110,5 +110,14 @@ public class TestWaitingMessage {
       return this.distantPeerManager;
     }
 
+    @Override
+    public void setConnected(int logicalClock) {
+    }
+
+    @Override
+    public boolean isInGroup() {
+      return false;
+    }
+
   }
 }

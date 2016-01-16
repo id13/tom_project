@@ -14,8 +14,7 @@ public class TestNewMember {
   @Test
   public void test() {
     InetSocketAddress address = new InetSocketAddress("localhost", 4242);
-    NewMemberMessage newMember = new NewMemberMessage(42, address);
-    assertEquals(42, newMember.getLogicalClock());
+    NewMemberMessage newMember = new NewMemberMessage(address);
     assertEquals(Message.NEW_MEMBER, newMember.getMessageType());
     assertTrue(address.equals(newMember.getNewMember()));
     

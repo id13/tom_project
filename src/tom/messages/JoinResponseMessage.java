@@ -11,8 +11,8 @@ public class JoinResponseMessage extends Message {
 
   private ArrayList<InetSocketAddress> group;
 
-  public JoinResponseMessage(int logicalClock, Collection<InetSocketAddress> group) {
-    super(logicalClock, Message.JOIN_RESPONSE, "completed later with setContent");
+  public JoinResponseMessage(Collection<InetSocketAddress> group) {
+    super(0, Message.JOIN_RESPONSE, "completed later with setContent");
     this.group = new ArrayList<>(group.size());
     byte[] content = new byte[4 + group.size() * 8];
     ByteUtil.writeInt32(content, 0, group.size());

@@ -1,17 +1,23 @@
 package tom;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import tom.messages.AckMessage;
 import tom.messages.JoinMessage;
+import tom.messages.JoinRequestMessage;
+import tom.messages.JoinResponseMessage;
 import tom.messages.Message;
+import tom.messages.NewMemberMessage;
+import tom.messages.WelcomeMessage;
 
 /**
  * This class is used to manage the messages in order to wait ACKs before to
@@ -24,6 +30,7 @@ public class MessageManager implements DeliverCallback {
 
   private PriorityQueue<WaitingMessage> waitingMessages = new PriorityQueue<>();
   private Map<InetSocketAddress, AckMessage> pendingAcks = new HashMap<>();
+  private HashSet<InGroupMessage> inGroupMessages = new HashSet<>();
   private final Peer peer;
   private final TomDeliverCallback tomDeliverCallback;
   private final Messenger messenger;
@@ -49,17 +56,28 @@ public class MessageManager implements DeliverCallback {
     Message message = Message.getMessageReceived(content);
     System.out.println("Received message (not delivered) from " + from + " : " + message);
     if (message instanceof AckMessage) {
-      treatAck((AckMessage) message, from);
+      handleAck((AckMessage) message, from);
     } else if (message instanceof JoinMessage) {
       this.handleJoinMessage((JoinMessage) message, from);
+    } else if (message instanceof JoinRequestMessage) {
+      this.handleJoinRequest((JoinRequestMessage) message, from);
+    } else if (message instanceof JoinResponseMessage) {
+      this.handleJoinResponse((JoinResponseMessage) message, from);
+    } else if (message instanceof NewMemberMessage) {
+      this.handleNewMember(((NewMemberMessage) message).getNewMember());
+    } else if (message instanceof WelcomeMessage) {
+      this.handleWelcome((WelcomeMessage) message, from);
     } else if (message.getMessageType() == Message.MESSAGE) {
-      treatMessage(message, from);
+      handleMessage(message, from);
     } else {
       Engine.panic("Unknown message type");
     }
   }
 
   private void handleJoinMessage(JoinMessage message, InetSocketAddress from) {
+    if (!peer.isInGroup()) {
+      inGroupMessages.add(new InGroupMessage(message, from));
+    }
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (this.distantPeerManager.isWaiting(message.getNewMember())) {
@@ -72,8 +90,7 @@ public class MessageManager implements DeliverCallback {
 
   private void updateWaitingMessages(Message message, InetSocketAddress from, int ackLogicalClock) {
     for (WaitingMessage waitingMessage : waitingMessages) {
-      if (waitingMessage.getLogicalClock() == message.getLogicalClock() 
-          && waitingMessage.getAuthor().equals(from) 
+      if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)
           && waitingMessage.getContent() == null) {
         waitingMessage.addMessage(from, message);
         waitingMessage.setAckLogicalClock(ackLogicalClock);
@@ -99,7 +116,10 @@ public class MessageManager implements DeliverCallback {
    * @param from
    *          : the address from which the message has been sent.
    */
-  private void treatMessage(Message message, InetSocketAddress from) {
+  private void handleMessage(Message message, InetSocketAddress from) {
+    if (!peer.isInGroup()) {
+      inGroupMessages.add(new InGroupMessage(message, from));
+    }
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (messenger != null) { // Useful for JUnit
@@ -119,7 +139,10 @@ public class MessageManager implements DeliverCallback {
    * @param from
    *          : The address from which the ACK has been sent.
    */
-  private void treatAck(AckMessage ack, InetSocketAddress from) {
+  private void handleAck(AckMessage ack, InetSocketAddress from) {
+    if (!peer.isInGroup()) {
+      inGroupMessages.add(new InGroupMessage(ack, from));
+    }
     peer.updateLogicalClock(ack.getLogicalClock());
     boolean foundInQueue = false;
     for (WaitingMessage waitingMessage : waitingMessages) {
@@ -151,9 +174,12 @@ public class MessageManager implements DeliverCallback {
         AckMessage ack = this.pendingAcks.get(joinMessage.getNewMember());
         if (ack == null) {
           waitingMessages.remove();
-          this.distantPeerManager.removeWaitingMember(joinMessage.getNewMember());
-          this.distantPeerManager.addMember(joinMessage.getNewMember());
-          this.sendMissingMessages(joinMessage.getNewMember());
+          InetSocketAddress newMember = joinMessage.getNewMember();
+          this.distantPeerManager.removeWaitingMember(newMember);
+          this.distantPeerManager.addMember(newMember);
+          this.sendMissingMessages(newMember);
+          this.notifyNewMember(newMember);
+          this.sendWelcome(waitingMessage.getLogicalClock(), newMember);
         } else {
           return;
         }
@@ -210,10 +236,88 @@ public class MessageManager implements DeliverCallback {
     }
   }
 
-  public void sendJoin(InetSocketAddress address) {
+  public void sendJoinRequest(InetSocketAddress address) {
+    JoinRequestMessage request = new JoinRequestMessage();
+    messenger.send(address, request.getFullMessage());
+  }
+
+  private void sendJoin(InetSocketAddress address) {
     int clock = peer.updateLogicalClock(0);
     JoinMessage message = new JoinMessage(clock, address);
     this.sendToGroup(message);
   }
 
+  private void handleJoinRequest(JoinRequestMessage message, InetSocketAddress from) {
+    if (!peer.isInGroup()) {
+      Engine.panic("can't receive an ACK when we aren't in a group.");
+    }
+    Set<InetSocketAddress> group = distantPeerManager.getGroup();
+    distantPeerManager.introduce(from);
+    sendJoin(from);
+    JoinResponseMessage response = new JoinResponseMessage(group);
+    messenger.send(from, response.getFullMessage());
+  }
+
+  private void handleJoinResponse(JoinResponseMessage message, InetSocketAddress from) {
+    if (peer.isInGroup()) {
+      Engine.panic("can't receive a JoinResponse when we already are in a group.");
+    }
+    ArrayList<InetSocketAddress> group = message.getGroup();
+    for (InetSocketAddress member : group) {
+      handleNewMember(member);
+    }
+  }
+
+  private void notifyNewMember(InetSocketAddress newMember) {
+    byte[] message = new NewMemberMessage(newMember).getFullMessage();
+    for (InetSocketAddress member : distantPeerManager.getMembersToIntroduce()) {
+      messenger.send(member, message);
+    }
+  }
+
+  private void handleNewMember(InetSocketAddress newMember) {
+    if (peer.isInGroup()) {
+      Engine.panic("can't receive a NewMemberMessage when we already are in a group.");
+    }
+    try {
+      messenger.connect(newMember.getAddress(), newMember.getPort());
+    } catch (SecurityException | IOException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+
+  }
+
+  private void sendWelcome(int logicalClock, InetSocketAddress newMember) {
+    WelcomeMessage welcome = new WelcomeMessage(logicalClock);
+    messenger.send(newMember, welcome.getFullMessage());
+  }
+
+  private void handleWelcome(WelcomeMessage message, InetSocketAddress from) {
+    if (peer.isInGroup()) {
+      Engine.panic("can't receive a Welcome when we already are in a group.");
+    }
+    peer.setConnected(message.getLogicalClock());
+    for (InGroupMessage inGroup : inGroupMessages) {
+      delivered(inGroup.from, inGroup.message.getFullMessage());
+    }
+  }
+
+  /**
+   * This bean is used to store a message and its origin when we receive a
+   * Message before to be in a group. This situation can happened just after the
+   * delivery of a Join in a group. At this moment, the new member can sometimes
+   * receive the retransmitted messages before to receive his welcome. So he
+   * has to receive the welcome before to handle these messages.
+   *
+   */
+  private class InGroupMessage {
+    private Message message;
+    private InetSocketAddress from;
+
+    private InGroupMessage(Message message, InetSocketAddress from) {
+      this.message = message;
+      this.from = from;
+    }
+  }
 }

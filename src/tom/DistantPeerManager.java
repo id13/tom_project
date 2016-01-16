@@ -49,7 +49,15 @@ public class DistantPeerManager {
     this.waitingMembers.remove(member);
   }
   
-  public void addMemberToIntroduce(InetSocketAddress member) {
+  /**
+   * This method move a member from waitingMembers to membersToIntroduce.
+   * @param member
+   */
+  public void introduce(InetSocketAddress member) {
+    if (!waitingMembers.contains(member)) {
+      Engine.panic("We received a JoinRequest from someone who wasn't in the waitingMember set");
+    }
+    this.waitingMembers.remove(member);
     this.membersToIntroduce.add(member);
   }
   

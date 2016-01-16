@@ -13,12 +13,17 @@ import tom.messages.Message;
 
 public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
 
+  private static final byte IN_GROUP = 0;
+  private static final byte CONNECTING = 1;
+
   private final Messenger messenger;
   private final MessageManager messageManager;
   private int logicalClock = 0;
   private final InetSocketAddress myAddress;
   private final DistantPeerManager distantPeerManager;
   private final TomJoinCallback joinCallback;
+  private byte stateGroup = IN_GROUP;
+  private InetSocketAddress integratorIntoGroup;
 
   /**
    * This builder initiates a Peer. So, it initiates a NioEngine, a Messenger
@@ -48,15 +53,29 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   }
 
   @Override
-  public void send(String content) {
+  public void send(String content) throws SendException {
+    if (stateGroup != IN_GROUP) {
+      throw new SendException("A peer can not send a message if he is not in a group");
+    }
     int lc = updateLogicalClock(0);
     Message message = new Message(lc, Message.MESSAGE, content);
     messageManager.treatMyMessage(message);
   }
 
   @Override
-  public void connect(InetSocketAddress address) throws UnknownHostException, SecurityException, IOException, ConnectException {
-    messenger.connect(address.getAddress(), address.getPort());
+  public synchronized void connect(InetSocketAddress address)
+      throws UnknownHostException, SecurityException, IOException, ConnectException {
+    if (stateGroup == CONNECTING) {
+      throw new ConnectException("call to method connect while the peer is already connecting to a group.");
+    }
+    if (distantPeerManager.getGroup().isEmpty()) {
+      integratorIntoGroup = address;
+      stateGroup = CONNECTING;
+      messenger.connect(address.getAddress(), address.getPort());
+    } else {
+      throw new ConnectException("call to method connect while the peer is already connected to a group.");
+    }
+
   }
 
   @Override
@@ -79,6 +98,9 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   public void connected(InetSocketAddress address) {
     System.out.println("[TOM] Connected to " + address);
     distantPeerManager.addMember(address);
+    if (integratorIntoGroup.equals(address)) {
+      messageManager.sendJoinRequest(address);
+    }
   }
 
   @Override
@@ -89,6 +111,9 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   @Override
   public void accepted(InetSocketAddress address) {
     System.out.println("[TOM] Accepted " + address);
+    if (this.stateGroup != IN_GROUP) {
+      Engine.panic("A connection has been accepted while we were not in a group");
+    }
     distantPeerManager.addWaitingMember(address);
     this.messageManager.checkAndUpdatePendingAcks(address);
   }
@@ -96,5 +121,17 @@ public class PeerImpl implements Peer, ConnectCallback, AcceptCallback {
   @Override
   public DistantPeerManager getDistantPeerManager() {
     return distantPeerManager;
+  }
+
+  @Override
+  public void setConnected(int logicalClock) {
+    this.logicalClock = logicalClock;
+    this.stateGroup = IN_GROUP;
+    joinCallback.joined(this);
+  }
+
+  @Override
+  public boolean isInGroup() {
+    return stateGroup == IN_GROUP;
   }
 }

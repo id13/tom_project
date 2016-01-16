@@ -13,6 +13,7 @@ import messages.engine.Messenger;
 import tom.ConnectException;
 import tom.Peer;
 import tom.PeerImpl;
+import tom.SendException;
 import tom.TomDeliverCallback;
 import tom.TomJoinCallback;
 
@@ -54,7 +55,12 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
 
   @Override
   public void delivered(InetSocketAddress from, byte[] content) {
-    peer.send(new String(content));
+    try {
+      peer.send(new String(content));
+    } catch (SendException e) {
+      Engine.panic(e.getMessage());
+      e.printStackTrace();
+    }
   }
 
   @Override

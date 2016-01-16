@@ -10,8 +10,8 @@ public class NewMemberMessage extends Message {
 
   private InetSocketAddress newMember;
 
-  public NewMemberMessage(int logicalClock, InetSocketAddress newMember) {
-    super(logicalClock, Message.NEW_MEMBER, "completed later with setContent");
+  public NewMemberMessage(InetSocketAddress newMember) {
+    super(0, Message.NEW_MEMBER, "completed later with setContent");
     this.newMember = newMember;
     byte[] content = new byte[8];
     try {

@@ -8,6 +8,7 @@ import messages.engine.Engine;
 import messages.engine.NioEngine;
 import tom.Peer;
 import tom.PeerImpl;
+import tom.SendException;
 
 public class MainThree {
 
@@ -38,7 +39,12 @@ public class MainThree {
         // while (!Thread.interrupted()) {
         try {
           Thread.sleep(1000);
-          peer3.send("Bonjour");
+          try {
+            peer3.send("Bonjour");
+          } catch (SendException e) {
+            Engine.panic(e.getMessage());
+            e.printStackTrace();
+          }
         } catch (InterruptedException e) {
           System.out.println("Interrupted");
         }

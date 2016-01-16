@@ -7,4 +7,8 @@ package tom;
  *
  */
 public class ConnectException extends Exception {
+
+  public ConnectException(String string) {
+    super(string);
+  }
 }
