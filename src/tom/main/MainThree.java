@@ -28,7 +28,7 @@ public class MainThree {
     Peer peer3 = new PeerImpl(myAddress, callback3, callback3);
     try {
     peer3.connect(new InetSocketAddress(myIpAddress, 12380));
-    peer3.connect(new InetSocketAddress(myIpAddress, 12381));
+    //peer3.connect(new InetSocketAddress(myIpAddress, 12381));
     } catch (tom.ConnectException e) {
       Engine.panic(e.getMessage());
     }
@@ -53,7 +53,6 @@ public class MainThree {
     };
     Thread t = new Thread(runnable);
     t.start();
-
   }
 
 }
