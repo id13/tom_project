@@ -264,9 +264,9 @@ public class MessageManager implements DeliverCallback {
     }
     Set<InetSocketAddress> group = distantPeerManager.getGroup();
     distantPeerManager.introduce(from);
-    sendJoin(from);
     JoinResponseMessage response = new JoinResponseMessage(group);
     messenger.send(from, response.getFullMessage());
+    sendJoin(from);
   }
 
   private void handleJoinResponse(JoinResponseMessage message, InetSocketAddress from) {
