@@ -52,14 +52,14 @@ public class MessageManager implements DeliverCallback {
       treatAck((AckMessage) message, from);
     } else if (message instanceof JoinMessage) {
       this.handleJoinMessage((JoinMessage) message, from);
-    } else if (message instanceof Message) {
+    } else if (message.getMessageType() == Message.MESSAGE) {
       treatMessage(message, from);
     } else {
       Engine.panic("Unknown message type");
     }
   }
 
-  public void handleJoinMessage(JoinMessage message, InetSocketAddress from) {
+  private void handleJoinMessage(JoinMessage message, InetSocketAddress from) {
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (this.distantPeerManager.isWaiting(message.getNewMember())) {
@@ -70,7 +70,7 @@ public class MessageManager implements DeliverCallback {
     this.updateWaitingMessages(message, from);
   }
 
-  public void updateWaitingMessages(Message message, InetSocketAddress from) {
+  private void updateWaitingMessages(Message message, InetSocketAddress from) {
     for (WaitingMessage waitingMessage : waitingMessages) {
       if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
         waitingMessage.addMessage(from, message);
@@ -99,16 +99,7 @@ public class MessageManager implements DeliverCallback {
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
     if (messenger != null) { // Useful for JUnit
-      if (message instanceof JoinMessage) {
-        JoinMessage joinMessage = (JoinMessage) message;
-        if (this.distantPeerManager.isWaiting(joinMessage.getNewMember())) {
-          sendToGroup(ourAck);
-        } else {
-          this.pendingAcks.put(joinMessage.getNewMember(), ourAck);
-        }
-      } else {
-        sendToGroup(ourAck);
-      }
+      sendToGroup(ourAck);
     }
     this.updateWaitingMessages(message, from);
   }
