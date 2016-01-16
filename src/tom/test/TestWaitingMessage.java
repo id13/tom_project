@@ -26,7 +26,7 @@ public class TestWaitingMessage {
     DistantPeerManager manager = myPeer.getDistantPeerManager();
     Message message = new Message(123, Message.MESSAGE, "Hi, how are you?");
     WaitingMessage waitingMessage = new WaitingMessage(message, myPeer);
-    assertEquals("Hi, how are you?", waitingMessage.getContent());
+    assertEquals("Hi, how are you?", waitingMessage.getContent().getContent());
     assertEquals(123, waitingMessage.getLogicalClock());
 
     assertTrue(manager.allAckReceived(waitingMessage));
