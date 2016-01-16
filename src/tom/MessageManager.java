@@ -67,18 +67,20 @@ public class MessageManager implements DeliverCallback {
     } else {
       this.pendingAcks.put(message.getNewMember(), ourAck);
     }
-    this.updateWaitingMessages(message, from);
+    this.updateWaitingMessages(message, from, logicalClock);
   }
 
-  private void updateWaitingMessages(Message message, InetSocketAddress from) {
+  private void updateWaitingMessages(Message message, InetSocketAddress from, int ackLogicalClock) {
     for (WaitingMessage waitingMessage : waitingMessages) {
       if (waitingMessage.getLogicalClock() == message.getLogicalClock() && waitingMessage.getAuthor().equals(from)) {
         waitingMessage.addMessage(from, message);
+        waitingMessage.setAckLogicalClock(ackLogicalClock);
         deliverHeadIfNeeded();
         return;
       }
     }
     WaitingMessage waitingMessage = new WaitingMessage(message, from);
+    waitingMessage.setAckLogicalClock(ackLogicalClock);
     waitingMessages.add(waitingMessage);
     deliverHeadIfNeeded(); // Useful for a group of 2 peers.
   }
@@ -101,7 +103,7 @@ public class MessageManager implements DeliverCallback {
     if (messenger != null) { // Useful for JUnit
       sendToGroup(ourAck);
     }
-    this.updateWaitingMessages(message, from);
+    this.updateWaitingMessages(message, from, logicalClock);
   }
 
   /**
@@ -200,7 +202,7 @@ public class MessageManager implements DeliverCallback {
       if (author.equals(this.peer.getMyAddress())) {
         this.messenger.send(newMember, message.getFullMessage());
       } else {
-        AckMessage ack = new AckMessage(message, author, peer.updateLogicalClock(0));
+        AckMessage ack = new AckMessage(message, author, waitingMessage.getAckLogicalClock());
         this.messenger.send(newMember, ack.getFullMessage());
       }
     }

@@ -23,8 +23,24 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
   private Message content;
   private long crc;
   private int logicalClock;
+  private int ackLogicalClock;
   private Set<InetSocketAddress> receivedAck = new HashSet<>();
 
+  
+  /**
+   * @return the ackLogicalClock
+   */
+  public int getAckLogicalClock() {
+    return ackLogicalClock;
+  }
+
+  /**
+   * @param ackLogicalClock the ackLogicalClock to set
+   */
+  public void setAckLogicalClock(int ackLogicalClock) {
+    this.ackLogicalClock = ackLogicalClock;
+  }
+  
   /**
    * Build a waiting message from a Message received. This method automatically
    * adds the address to the set.
@@ -45,7 +61,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
     }
     receivedAck.add(author);
   }
-
+  
   /**
    * Build a waiting message from a Message that we are sending.
    * 
