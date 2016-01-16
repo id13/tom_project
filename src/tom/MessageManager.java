@@ -1,6 +1,9 @@
 package tom;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -8,6 +11,7 @@ import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import tom.messages.AckMessage;
+import tom.messages.JoinMessage;
 import tom.messages.Message;
 
 /**
@@ -123,7 +127,7 @@ public class MessageManager implements DeliverCallback {
     while (waitingMessage != null && distantPeerManager.allAckReceived(waitingMessage)) {
       waitingMessages.remove();
       System.out.println("delivered " + waitingMessage.getContent() + " from " + waitingMessage.getAuthor().toString());
-      tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent());
+      tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent().getContent());
       waitingMessage = waitingMessages.peek();
     }
   }

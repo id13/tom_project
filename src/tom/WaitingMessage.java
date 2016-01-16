@@ -20,7 +20,7 @@ import tom.messages.Message;
 public class WaitingMessage implements Comparable<WaitingMessage> {
 
   private InetSocketAddress author;
-  private String content;
+  private Message content;
   private long crc;
   private int logicalClock;
   private Set<InetSocketAddress> receivedAck = new HashSet<>();
@@ -36,10 +36,10 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    */
   public WaitingMessage(Message message, InetSocketAddress author) {
     if (message.getMessageType() == Message.MESSAGE) {
-      this.content = message.getContent();
+      this.content = message;
       this.logicalClock = message.getLogicalClock();
       this.author = author;
-      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
+      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content.getContent()));
     } else {
       Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
     }
@@ -56,10 +56,10 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    */
   public WaitingMessage(Message message, Peer peer) {
     if (message.getMessageType() == Message.MESSAGE) {
-      this.content = message.getContent();
+      this.content = message;
       this.logicalClock = message.getLogicalClock();
       this.author = peer.getMyAddress();
-      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content));
+      this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content.getContent()));
     } else {
       Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
     }
@@ -115,11 +115,11 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
     if (ByteUtil.computeCRC32(ByteUtil.writeString(message.getContent())) != crc) {
       Engine.panic("wrong CRC.");
     }
-    this.content = message.getContent();
+    this.content = message;
     this.receivedAck.add(address);
   }
 
-  public String getContent() {
+  public Message getContent() {
     return content;
   }
 
