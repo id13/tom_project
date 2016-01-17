@@ -27,11 +27,14 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   private Set<InetSocketAddress> slavesToJoin;
   private boolean isRunning = false;
   private Messenger messenger;
+  private InetSocketAddress startingPeer;
   private int port;
 
-  public BurstManager(int port) {
+  public BurstManager(int port, InetSocketAddress startingPeer) {
     this.port = port;
     this.messagesToCheck = new HashMap<InetSocketAddress, LinkedList<String>>();
+    this.messagesToCheck.put(startingPeer, new LinkedList<>());
+    this.startingPeer = startingPeer;
   }
 
   public void createMessenger(Set<InetSocketAddress> slavesToConnect, Set<InetSocketAddress> slavesToJoin) throws UnknownHostException, SecurityException, IOException {
@@ -44,7 +47,6 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     messenger.accept();
     for (InetSocketAddress slaveToConnect : this.slavesToConnect) {
       this.messenger.connect(slaveToConnect.getAddress(), slaveToConnect.getPort());
-      this.messagesToCheck.put(new InetSocketAddress(slaveToConnect.getAddress(), slaveToConnect.getPort()), new LinkedList<String>());
     }
   }
 
@@ -58,8 +60,8 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     };
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
-    BurstManager manager = new BurstManager(22379);
     InetAddress myIpAddress = InetAddress.getLoopbackAddress();
+    BurstManager manager = new BurstManager(22379, new InetSocketAddress(myIpAddress, 22380));
     Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();
     Set<InetSocketAddress> addressesToJoin = new HashSet<>();
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22380));
@@ -68,7 +70,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     addressesToJoin.add(new InetSocketAddress(myIpAddress, 22381));
     addressesToJoin.add(new InetSocketAddress(myIpAddress, 22382));    
     manager.createMessenger(addressesToConnect, addressesToJoin);
-
+    manager.startBursting();
   }
 
   public void checkMessages() {
@@ -97,7 +99,8 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   public void delivered(InetSocketAddress from, byte[] content) {
     if((new String(content)).equals("JOINED")) {
       this.slavesToJoin.remove(from);
-      this.startBurstIfPossible();
+      this.messagesToCheck.put(from, new LinkedList<String>());
+      this.slaves.add(from);
     } else {
       LinkedList<String> messages = this.messagesToCheck.get(from);
       messages.add(new String(content));
@@ -107,12 +110,13 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   }
 
   public void sendMessagerOrder(String content) {
-    this.messenger.broadcast(content.getBytes());
+    for(InetSocketAddress slave : this.slaves) {
+      this.messenger.send(slave, content.getBytes());
+    }
   }
 
   @Override
   public void closed(InetSocketAddress address) {
-    this.messenger.closeAllConnections();
     Engine.panic("a member left the group");
   }
 
@@ -126,8 +130,6 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
         int cpt = 0;
         for (;;) {
           try {
-            // On my computer, this is the limit value, bellow that, the tom
-            // layer begins to fall apart
             Thread.currentThread().sleep(1);
           } catch (InterruptedException e) {
             e.printStackTrace();
@@ -143,17 +145,14 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     burstThread.start();
   }
   
-  private void startBurstIfPossible() {
-    if(this.slavesToConnect.isEmpty() && this.slavesToJoin.isEmpty() && !this.isRunning)
-      this.startBursting();
-  }
   
   @Override
   public void connected(InetSocketAddress address) {
     System.out.println("Connected to " + address);
-    this.slaves.add(address);
     this.slavesToConnect.remove(address);
-    this.startBurstIfPossible();
+    if(address.equals(this.startingPeer)) {
+      this.slaves.add(this.startingPeer);
+    }
   }
 
   @Override
