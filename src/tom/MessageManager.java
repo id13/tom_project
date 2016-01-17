@@ -77,6 +77,7 @@ public class MessageManager implements DeliverCallback {
   private void handleJoinMessage(JoinMessage message, InetSocketAddress from) {
     if (!peer.isInGroup()) {
       inGroupMessages.add(new InGroupMessage(message, from));
+      return;
     }
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
@@ -129,6 +130,7 @@ public class MessageManager implements DeliverCallback {
   private void handleMessage(Message message, InetSocketAddress from) {
     if (!peer.isInGroup()) {
       inGroupMessages.add(new InGroupMessage(message, from));
+      return;
     }
     int logicalClock = peer.updateLogicalClock(message.getLogicalClock());
     AckMessage ourAck = new AckMessage(message, from, logicalClock);
@@ -152,6 +154,7 @@ public class MessageManager implements DeliverCallback {
   private void handleAck(AckMessage ack, InetSocketAddress from) {
     if (!peer.isInGroup()) {
       inGroupMessages.add(new InGroupMessage(ack, from));
+      return;
     }
     peer.updateLogicalClock(ack.getLogicalClock());
     boolean foundInQueue = false;
