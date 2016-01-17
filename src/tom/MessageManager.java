@@ -200,7 +200,8 @@ public class MessageManager implements DeliverCallback {
         waitingMessages.remove();
       }
       System.out.println("delivered " + waitingMessage.getContent() + " from " + waitingMessage.getAuthor().toString());
-      tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent().getContent());
+      if(waitingMessage.getContent().getMessageType() == Message.MESSAGE)
+        tomDeliverCallback.deliver(waitingMessage.getAuthor(), waitingMessage.getContent().getContent());
       waitingMessage = waitingMessages.peek();
     }
   }
