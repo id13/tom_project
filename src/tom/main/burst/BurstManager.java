@@ -6,11 +6,15 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import messages.callbacks.AcceptCallback;
 import messages.callbacks.ConnectCallback;
@@ -18,6 +22,8 @@ import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
 import messages.engine.NioEngine;
+import messages.util.ByteUtil;
+import tom.messages.Message;
 
 public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback {
 
@@ -28,15 +34,32 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   private boolean isRunning = false;
   private Messenger messenger;
   private InetSocketAddress startingPeer;
+  private LinkedList<Integer> messengerPortsRange; 
+  private LinkedList<Integer> peersPortsRange;  
   private int port;
 
-  public BurstManager(int port, InetSocketAddress startingPeer) {
+  public BurstManager(int port, InetSocketAddress startingPeer, LinkedList<Integer> messengerPortsRange, LinkedList<Integer> peersPortsRange) {
     this.port = port;
     this.messagesToCheck = new HashMap<InetSocketAddress, LinkedList<String>>();
     this.messagesToCheck.put(startingPeer, new LinkedList<>());
     this.startingPeer = startingPeer;
+    this.peersPortsRange = peersPortsRange;
+    this.messengerPortsRange = messengerPortsRange;
   }
-
+  
+  /**
+   * @return the messengerPortsRange
+   */
+  public LinkedList<Integer> getMessengerPortsRange() {
+    return messengerPortsRange;
+  }
+  /**
+   * @return the peersPortsRange
+   */
+  public LinkedList<Integer> getPeersPortsRange() {
+    return peersPortsRange;
+  }
+  
   public void createMessenger(Set<InetSocketAddress> slavesToConnect, Set<InetSocketAddress> slavesToJoin) throws UnknownHostException, SecurityException, IOException {
     this.slavesToConnect = slavesToConnect;
     this.slavesToJoin = slavesToJoin;
@@ -61,14 +84,18 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Thread engineThread = new Thread(engineLoop, "engineThread");
     engineThread.start();
     InetAddress myIpAddress = InetAddress.getLoopbackAddress();
-    BurstManager manager = new BurstManager(22379, new InetSocketAddress(myIpAddress, 22380));
+    LinkedList<Integer> messengerPortsRange = new LinkedList<>(
+        IntStream.range(22383, 22983).boxed().collect(Collectors.toList()));
+    LinkedList<Integer> peersPortsRange = new LinkedList<>(
+        IntStream.range(12383, 12983).boxed().collect(Collectors.toSet()));    
+    BurstManager manager = new BurstManager(22379, new InetSocketAddress(myIpAddress, 22380), messengerPortsRange, peersPortsRange);
     Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();
     Set<InetSocketAddress> addressesToJoin = new HashSet<>();
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22380));
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22381));
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22382));
     addressesToJoin.add(new InetSocketAddress(myIpAddress, 22381));
-    addressesToJoin.add(new InetSocketAddress(myIpAddress, 22382));    
+    addressesToJoin.add(new InetSocketAddress(myIpAddress, 22382));
     manager.createMessenger(addressesToConnect, addressesToJoin);
     manager.startBursting();
   }
@@ -97,15 +124,30 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
 
   @Override
   public void delivered(InetSocketAddress from, byte[] content) {
-    if((new String(content)).equals("JOINED")) {
-      this.slavesToJoin.remove(from);
-      this.messagesToCheck.put(from, new LinkedList<String>());
-      this.slaves.add(from);
-    } else {
+    byte[] actualContent = new byte[content.length - 4];
+    byte[] typeB = new byte[4];
+    System.arraycopy(content, 0, typeB, 0, 4);
+    System.arraycopy(content, 4, actualContent, 0, actualContent.length);
+    int type = ByteUtil.readInt32(typeB, 0);
+    if(type == Message.JOIN) {
+      try {
+        InetSocketAddress newMember = ByteUtil.readInetSocketAddress(actualContent, 0);
+        this.slavesToJoin.remove(newMember);
+        if(!this.slaves.contains(newMember)) {
+          this.messagesToCheck.put(from, new LinkedList<String>());
+          this.slaves.add(from);
+        }
+      } catch (UnknownHostException e) {
+        e.printStackTrace();
+        Engine.panic(e.getMessage());
+      }
+    } else if(type == Message.MESSAGE) {
       LinkedList<String> messages = this.messagesToCheck.get(from);
-      messages.add(new String(content));
+      messages.add(new String(actualContent));
       this.messagesToCheck.put(from, messages);
       this.checkMessages();      
+    } else {
+      Engine.panic("unexpected message type");
     }
   }
 
@@ -119,6 +161,10 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   public void closed(InetSocketAddress address) {
     Engine.panic("a member left the group");
   }
+  
+  public Messenger getMessenger() {
+    return this.messenger;
+  }
 
   public void startBursting() {
     System.out.println("Start Bursting");
@@ -130,9 +176,9 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
         int cpt = 0;
         for (;;) {
           try {
-            Thread.currentThread().sleep(1);
+            Thread.sleep(1);
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(); 
             Thread.currentThread().interrupt();
             Engine.panic(e.getMessage());
           }
@@ -144,6 +190,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Thread burstThread = new Thread(burstLoop, "burstThread");
     burstThread.start();
   }
+
   
   
   @Override

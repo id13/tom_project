@@ -1,7 +1,9 @@
 package tom.main.burst;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,12 +12,14 @@ import messages.callbacks.ConnectCallback;
 import messages.callbacks.DeliverCallback;
 import messages.engine.Engine;
 import messages.engine.Messenger;
+import messages.util.ByteUtil;
 import tom.ConnectException;
 import tom.Peer;
 import tom.PeerImpl;
 import tom.SendException;
 import tom.TomDeliverCallback;
 import tom.TomJoinCallback;
+import tom.messages.Message;
 
 public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCallback, TomDeliverCallback, TomJoinCallback{
 
@@ -64,9 +68,21 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   }
 
   @Override
-  public void deliver(InetSocketAddress from, String message) {
-    messenger.broadcast(
-        (message + " from " + from.getAddress().getHostAddress() + ':' + from.getPort()).getBytes());
+  public void deliver(InetSocketAddress from, String message, int type) {
+    byte [] content;
+    if(type == Message.MESSAGE) {
+      content = (message + " from " + from.getAddress().getHostAddress() + ':' + from.getPort()).getBytes();
+    } else {
+      content = message.getBytes();
+    }
+    byte[] messageType = new byte[4];
+    ByteUtil.writeInt32(messageType, 0, type);
+    byte[] bytes = new byte[4 + content.length];
+    System.arraycopy(messageType, 0, bytes, 0, 4);
+    System.arraycopy(content, 0, bytes, 4, content.length);
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
+    InetSocketAddress managerAddress = new InetSocketAddress(myIpAddress, 22379); 
+    messenger.send(managerAddress, bytes);
   }
 
   @Override
@@ -77,6 +93,20 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   @Override
   public void joined(Peer peer) {
     System.out.println("Joined.");
-    messenger.broadcast("JOINED".getBytes());
+    byte[] content = new byte[8];
+    try {
+      ByteUtil.writeInetSocketAddress(content, 0, peer.getMyAddress());
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+      Engine.panic(e.getMessage());
+    }
+    byte[] messageType = new byte[4];
+    ByteUtil.writeInt32(messageType, 0, Message.JOIN);
+    byte[] bytes = new byte[4 + content.length];
+    System.arraycopy(messageType, 0, bytes, 0, 4);
+    System.arraycopy(content, 0, bytes, 4, content.length);
+    InetAddress myIpAddress = InetAddress.getLoopbackAddress();
+    InetSocketAddress managerAddress = new InetSocketAddress(myIpAddress, 22379); 
+    messenger.send(managerAddress, bytes);   
   }
 }

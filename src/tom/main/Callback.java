@@ -15,7 +15,7 @@ public class Callback implements TomDeliverCallback, TomJoinCallback {
   }
 
   @Override
-  public void deliver(InetSocketAddress from, String message) {
+  public void deliver(InetSocketAddress from, String message, int type) {
     System.out.println("Delivered by TOM layer from " + from.toString() + " : " + message);
 
   }
