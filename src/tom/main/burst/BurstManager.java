@@ -24,6 +24,8 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
   private HashMap<InetSocketAddress, LinkedList<String>> messagesToChek;
   private Set<InetSocketAddress> slaves = new HashSet<>();
   private Set<InetSocketAddress> slavesToConnect;
+  private Set<InetSocketAddress> slavesToJoin;
+  private boolean isRunning = false;
   private Messenger messenger;
   private int port;
 
@@ -32,8 +34,9 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     this.messagesToChek = new HashMap<InetSocketAddress, LinkedList<String>>();
   }
 
-  public void createMessenger(Set<InetSocketAddress> slavesToConnect) throws UnknownHostException, SecurityException, IOException {
+  public void createMessenger(Set<InetSocketAddress> slavesToConnect, Set<InetSocketAddress> slavesToJoin) throws UnknownHostException, SecurityException, IOException {
     this.slavesToConnect = slavesToConnect;
+    this.slavesToJoin = slavesToJoin;
     this.messenger = new Messenger(NioEngine.getNioEngine(), this.port);
     this.messenger.setConnectCallback(this);
     this.messenger.setClosedCallback(this);
@@ -58,10 +61,13 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     BurstManager manager = new BurstManager(22379);
     InetAddress myIpAddress = InetAddress.getLoopbackAddress();
     Set<InetSocketAddress> addressesToConnect = new HashSet<InetSocketAddress>();
+    Set<InetSocketAddress> addressesToJoin = new HashSet<>();
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22380));
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22381));
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 22382));
-    manager.createMessenger(addressesToConnect);
+    addressesToJoin.add(new InetSocketAddress(myIpAddress, 22381));
+    addressesToJoin.add(new InetSocketAddress(myIpAddress, 22382));    
+    manager.createMessenger(addressesToConnect, addressesToJoin);
 
   }
 
@@ -89,10 +95,15 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
 
   @Override
   public void delivered(InetSocketAddress from, byte[] content) {
-    LinkedList<String> messages = this.messagesToChek.get(from);
-    messages.add(new String(content));
-    this.messagesToChek.put(from, messages);
-    this.checkMessages();
+    if((new String(content)).equals("JOINED")) {
+      this.slavesToJoin.remove(from);
+      this.startBurstIfPossible();
+    } else {
+      LinkedList<String> messages = this.messagesToChek.get(from);
+      messages.add(new String(content));
+      this.messagesToChek.put(from, messages);
+      this.checkMessages();      
+    }
   }
 
   public void sendMessagerOrder(String content) {
@@ -107,6 +118,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
 
   public void startBursting() {
     System.out.println("Start Bursting");
+    this.isRunning = true;
     BurstManager manager = this;
     Runnable burstLoop = new Runnable() {
       @Override
@@ -130,14 +142,18 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     Thread burstThread = new Thread(burstLoop, "burstThread");
     burstThread.start();
   }
-
+  
+  private void startBurstIfPossible() {
+    if(this.slavesToConnect.isEmpty() && this.slavesToJoin.isEmpty() && !this.isRunning)
+      this.startBursting();
+  }
+  
   @Override
   public void connected(InetSocketAddress address) {
     System.out.println("Connected to " + address);
     this.slaves.add(address);
     this.slavesToConnect.remove(address);
-    if (this.slavesToConnect.isEmpty())
-      this.startBursting();
+    this.startBurstIfPossible();
   }
 
   @Override

@@ -77,5 +77,6 @@ public class PeerWrapper implements AcceptCallback, ConnectCallback, DeliverCall
   @Override
   public void joined(Peer peer) {
     System.out.println("Joined.");
+    messenger.broadcast("JOINED".getBytes());
   }
 }

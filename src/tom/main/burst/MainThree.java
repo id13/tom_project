@@ -23,7 +23,6 @@ public class MainThree {
     InetSocketAddress myAddress = new InetSocketAddress(myIpAddress, 12382);
     List<InetSocketAddress> addressesToConnect = new ArrayList<InetSocketAddress>();
     addressesToConnect.add(new InetSocketAddress(myIpAddress, 12380));
-    addressesToConnect.add(new InetSocketAddress(myIpAddress, 12381));
     Messenger messenger = new Messenger(engine, 22382);
     PeerWrapper PeerWrp = new PeerWrapper(messenger, myAddress, addressesToConnect);
 
