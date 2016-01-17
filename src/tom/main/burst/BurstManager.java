@@ -21,7 +21,7 @@ import messages.engine.NioEngine;
 
 public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCallback {
 
-  private HashMap<InetSocketAddress, LinkedList<String>> messagesToChek;
+  private HashMap<InetSocketAddress, LinkedList<String>> messagesToCheck;
   private Set<InetSocketAddress> slaves = new HashSet<>();
   private Set<InetSocketAddress> slavesToConnect;
   private Set<InetSocketAddress> slavesToJoin;
@@ -31,7 +31,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
 
   public BurstManager(int port) {
     this.port = port;
-    this.messagesToChek = new HashMap<InetSocketAddress, LinkedList<String>>();
+    this.messagesToCheck = new HashMap<InetSocketAddress, LinkedList<String>>();
   }
 
   public void createMessenger(Set<InetSocketAddress> slavesToConnect, Set<InetSocketAddress> slavesToJoin) throws UnknownHostException, SecurityException, IOException {
@@ -44,7 +44,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     messenger.accept();
     for (InetSocketAddress slaveToConnect : this.slavesToConnect) {
       this.messenger.connect(slaveToConnect.getAddress(), slaveToConnect.getPort());
-      this.messagesToChek.put(new InetSocketAddress(slaveToConnect.getAddress(), slaveToConnect.getPort()), new LinkedList<String>());
+      this.messagesToCheck.put(new InetSocketAddress(slaveToConnect.getAddress(), slaveToConnect.getPort()), new LinkedList<String>());
     }
   }
 
@@ -75,7 +75,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
     String baseMessage = null;
     String nextMessage = null;
     // First we check whether the first message of each list are the same
-    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
+    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToCheck.entrySet()) {
       if (messages.getValue().isEmpty())
         return;
       nextMessage = messages.getValue().peek();
@@ -87,7 +87,7 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       }
     }
     // If so, we remove these messages
-    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToChek.entrySet()) {
+    for (Entry<InetSocketAddress, LinkedList<String>> messages : this.messagesToCheck.entrySet()) {
       messages.getValue().poll();
     }
     System.out.println("message delivered by enslaved peers : " + nextMessage);
@@ -99,9 +99,9 @@ public class BurstManager implements AcceptCallback, ConnectCallback, DeliverCal
       this.slavesToJoin.remove(from);
       this.startBurstIfPossible();
     } else {
-      LinkedList<String> messages = this.messagesToChek.get(from);
+      LinkedList<String> messages = this.messagesToCheck.get(from);
       messages.add(new String(content));
-      this.messagesToChek.put(from, messages);
+      this.messagesToCheck.put(from, messages);
       this.checkMessages();      
     }
   }
