@@ -6,6 +6,11 @@ import java.net.UnknownHostException;
 
 public abstract class Engine {
 
+  protected long acceptCount = 0;
+  protected long connectCount = 0;
+  protected long writeCount = 0;
+  protected long readCount = 0;
+
   /**
    * Call this when something you don't understand happens. This is your
    * suicide, enforcing a fail-stop behavior. It is also a single place where to
@@ -30,17 +35,15 @@ public abstract class Engine {
   long lastEcho;
   long startTime;
 
-  long totalAcceptCount;
-  long totalConnectCount;
-  long totalWriteCount;
-  long totalReadCount;
-  long acceptCount;
-  long connectCount;
-  long writeCount;
-  long readCount;
+  long totalAcceptCount = 0;
+  long totalConnectCount = 0;
+  long totalWriteCount = 0;
+  long totalReadCount = 0;
   Thread echoThread;
   Runnable echo = new Runnable() {
     public void run() {
+      startTime = System.currentTimeMillis();
+      lastEcho = startTime;
       while (true) {
         try {
           Thread.sleep(1000);

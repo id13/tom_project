@@ -37,6 +37,7 @@ public class NioEngine extends Engine {
       e.printStackTrace();
       Engine.panic(e.getMessage());
     }
+    super.startEcho();
   }
 
   private void handleGentlyException(Exception ex) {
@@ -94,12 +95,15 @@ public class NioEngine extends Engine {
               channel.setAcceptCallback(messenger);
               channel.setServer(server);
               channel.sendHello(messenger.getAcceptAddress());
+              super.acceptCount++;
             } else if (key.isReadable()) {
               ReceiveCallback receiver = (ReceiveCallback) subject;
               receiver.handleReceive();
+              super.readCount++;
             } else if (key.isWritable()) {
               WriteCallback writer = (WriteCallback) subject;
               writer.handleWrite();
+              super.writeCount++;
             } else if (key.isConnectable()) {
               Messenger messenger = (Messenger) subject;
               SocketChannel socket = (SocketChannel) key.channel();
@@ -113,6 +117,7 @@ public class NioEngine extends Engine {
                   this.register(socket, channel, SelectionKey.OP_READ));
               channel.setServer(nioServer);
               channel.sendHello(messenger.getAcceptAddress());
+              super.connectCount++;
             }
           }
         }
