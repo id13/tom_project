@@ -122,7 +122,7 @@ public class TestMessageManager {
 
     @Override
     public boolean isInGroup() {
-      return false;
+      return true;
     }
 
   }
