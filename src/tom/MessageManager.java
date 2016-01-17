@@ -265,7 +265,7 @@ public class MessageManager implements DeliverCallback {
 
   private void handleJoinRequest(JoinRequestMessage message, InetSocketAddress from) {
     if (!peer.isInGroup()) {
-      Engine.panic("can not receive an ACK when we are not in a group.");
+      Engine.panic("can not receive a JoinRequest when we are not in a group.");
     }
     Set<InetSocketAddress> group = distantPeerManager.getGroup();
     distantPeerManager.introduce(from);
