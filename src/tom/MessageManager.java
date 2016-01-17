@@ -265,7 +265,7 @@ public class MessageManager implements DeliverCallback {
 
   private void handleJoinRequest(JoinRequestMessage message, InetSocketAddress from) {
     if (!peer.isInGroup()) {
-      Engine.panic("can't receive an ACK when we aren't in a group.");
+      Engine.panic("can not receive an ACK when we are not in a group.");
     }
     Set<InetSocketAddress> group = distantPeerManager.getGroup();
     distantPeerManager.introduce(from);
@@ -276,7 +276,7 @@ public class MessageManager implements DeliverCallback {
 
   private void handleJoinResponse(JoinResponseMessage message, InetSocketAddress from) {
     if (peer.isInGroup()) {
-      Engine.panic("can't receive a JoinResponse when we already are in a group.");
+      Engine.panic("can not receive a JoinResponse when we already are in a group.");
     }
     ArrayList<InetSocketAddress> group = message.getGroup();
     for (InetSocketAddress member : group) {
@@ -293,7 +293,7 @@ public class MessageManager implements DeliverCallback {
 
   private void handleNewMember(InetSocketAddress newMember) {
     if (peer.isInGroup()) {
-      Engine.panic("can't receive a NewMemberMessage when we already are in a group.");
+      Engine.panic("can not receive a NewMemberMessage when we already are in a group.");
     }
     try {
       messenger.connect(newMember.getAddress(), newMember.getPort());
@@ -311,7 +311,7 @@ public class MessageManager implements DeliverCallback {
 
   private void handleWelcome(WelcomeMessage message, InetSocketAddress from) {
     if (peer.isInGroup()) {
-      Engine.panic("can't receive a Welcome when we already are in a group.");
+      Engine.panic("can not receive a Welcome when we already are in a group.");
     }
     peer.setConnected(message.getLogicalClock());
     for (InGroupMessage inGroup : inGroupMessages) {
@@ -321,9 +321,9 @@ public class MessageManager implements DeliverCallback {
 
   /**
    * This bean is used to store a message and its origin when we receive a
-   * Message before to be in a group. This situation can happened just after the
+   * Message before being in a group. This situation can happened just after the
    * delivery of a Join in a group. At this moment, the new member can sometimes
-   * receive the retransmitted messages before to receive his welcome. So he has
+   * receive the retransmitted messages before receiving his welcome. So he has
    * to receive the welcome before to handle these messages.
    *
    */
