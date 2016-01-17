@@ -47,4 +47,8 @@ public class TestByteUtil {
     assertTrue(Arrays.equals(bytes3, bytes4));
   }
 
+  @Test
+  public void testRandomString() {
+    String s = ByteUtil.generateRandom();
+  }
 }

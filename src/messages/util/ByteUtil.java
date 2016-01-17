@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.UnresolvedAddressException;
+import java.util.Random;
 import java.util.zip.CRC32;
 
 import messages.engine.Engine;
@@ -108,4 +109,17 @@ public class ByteUtil {
     return new InetSocketAddress(addr, port);
   }
 
+  /**
+   * 
+   * @return a random string of length between 1 and 3000.
+   */
+  static public String generateRandom() {
+    Random random = new Random();
+    int size = random.nextInt(3000) + 1;
+    byte[] bytes = new byte[size];
+    for (int i = 0; i < size; i++) {
+      bytes[i] = (byte) random.nextInt(256);
+    }
+    return readString(bytes);
+  }
 }
