@@ -77,7 +77,7 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
       this.author = peer.getMyAddress();
       this.crc = ByteUtil.computeCRC32(ByteUtil.writeString(content.getContent()));
     } else {
-      Engine.panic("WaitingMessage build with a message not of" + "the type TYPE_MESSAGE");
+      Engine.panic("WaitingMessage build neither with type MESSAGE or JOIN");
     }
   }
 
@@ -107,10 +107,10 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    */
   public void addAck(InetSocketAddress address, AckMessage ackMessage) {
     if (ackMessage.getCrc32() != crc || ackMessage.getLogicalClock() <= this.logicalClock) {
-      Engine.panic("The ack doesn't correspond to the acked message or there is a problem with the logical clock.");
+      Engine.panic("The ack doesn't correspond to the acked message or there is a problem with the logical clock : " + ackMessage);
     }
     if (receivedAck.contains(address)) {
-      Engine.panic("This ack has already been received");
+      Engine.panic("This ack has already been received : " + ackMessage);
     }
     receivedAck.add(address);
   }
@@ -126,10 +126,10 @@ public class WaitingMessage implements Comparable<WaitingMessage> {
    */
   public void addMessage(InetSocketAddress address, Message message) {
     if (content != null || logicalClock != message.getLogicalClock() || !author.equals(address)) {
-      Engine.panic("The message doesn't correspond to the waiting message");
+      Engine.panic("The message doesn't correspond to the waiting message : " + message);
     }
     if (ByteUtil.computeCRC32(ByteUtil.writeString(message.getContent())) != crc) {
-      Engine.panic("wrong CRC.");
+      Engine.panic("wrong CRC : " + message);
     }
     this.content = message;
     this.receivedAck.add(address);
